@@ -13,6 +13,21 @@ A modern, fast, and responsive Point of Sale (POS) system designed specifically 
 
 ---
 
+## 🔑 Akun Uji Coba Default (Seeded Accounts)
+
+Gunakan akun-akun berikut untuk masuk ke aplikasi setelah database terisi:
+
+*   **Akun Admin**:
+    *   Username: `admin`
+    *   Password: `admin123`
+    *   Role: `ADMIN` (Akses penuh kecuali fitur transaksi kasir)
+*   **Akun Kasir**:
+    *   Username: `kasir`
+    *   Password: `kasir123`
+    *   Role: `KASIR` (Akses kasir/pembayaran, input member, dan riwayat penjualan)
+
+---
+
 ## 🛠️ Panduan Setup & Instalasi
 
 ### Prasyarat
