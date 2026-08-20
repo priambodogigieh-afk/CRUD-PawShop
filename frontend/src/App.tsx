@@ -1,19 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Search,
-  Package,
-  Layers,
-  DollarSign,
-  AlertCircle,
-  X,
-  Check,
-  RotateCcw,
-  LogOut
-} from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import type { Product, Member } from './types'
 import { fetchProducts, createTransaction, fetchMembers } from './api'
 import { useAuth } from './context/AuthContext'
@@ -33,9 +20,7 @@ const CATEGORIES = [
   'Lain-lain'
 ]
 
-// Avatar image URL from desain.md
-const BRAND_LOGO = "https://lh3.googleusercontent.com/aida-public/AB6AXuCBzmtD58Ong2H6ko9ppWgUhQbUDjLrtpQxu42V0GrOogXyy2u0aDC2WwDy2XpDKdToxdxRR9K3XZOLpVKArleCpttHohF898G2ilJCZMKB02VZcCf-0cPE0T3_uI4OdD_ZNUqw5A_C61dCqCOE5cJCO2bUr0QG_ChI4gjp3mqnByuMWRUSUhB2SZM5mcxcoWYtqK2sJ4dRmffUr4_qQHcPV5xx6gb9rDdWvYb4T8Bb45_dzFq6ffflMg"
-const CASHIER_AVATAR = "https://lh3.googleusercontent.com/aida-public/AB6AXuDKmgtm_oZ7W4KxzT5K5KL1e9mQhQZEMEdiFEgTOm8BmwYOWXo-eZKO-_n9-O2UbYhMN5jG3wdJzoPSMb8bEKRONUYrtN7Hs2Sflvzuh9bO1CT__IagIx-tFz7YZswTg-wDVuzENIwGUXpzqwCkInj14ESOHZUorkAYnAM7FSQ4yKMMGBefstfcQqmZ2xKu721D1e0fv9-_yS_U6acRiUFs9hKXdxBryXDo46f4TwByLSLpaRl14h8pNQ"
+
 
 // Helper function to map product keywords to high-quality images from desain.md
 function getProductImage(name: string, category: string): string {
@@ -54,35 +39,7 @@ function getProductImage(name: string, category: string): string {
   return 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?q=80&w=300&auto=format&fit=crop'
 }
 
-// Translate Category names dynamically for the table to match mockup (Food, Toys, Grooming)
-function getCategoryName(category: string, lang: 'ID' | 'EN'): string {
-  if (lang === 'EN') {
-    switch (category) {
-      case 'Makanan Kucing':
-      case 'Makanan Anjing':
-        return 'Food'
-      case 'Perawatan & Kesehatan':
-        return 'Grooming'
-      case 'Aksesoris & Mainan':
-        return 'Toys'
-      default:
-        return 'Others'
-    }
-  } else {
-    switch (category) {
-      case 'Makanan Kucing':
-        return 'Makanan Kucing'
-      case 'Makanan Anjing':
-        return 'Makanan Anjing'
-      case 'Perawatan & Kesehatan':
-        return 'Perawatan'
-      case 'Aksesoris & Mainan':
-        return 'Mainan'
-      default:
-        return 'Lain-lain'
-    }
-  }
-}
+
 
 interface CartItem {
   product: Product
@@ -250,7 +207,6 @@ function Dashboard() {
   // API State
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
 
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState<string>('')
@@ -258,20 +214,9 @@ function Dashboard() {
 
   // Cart State (POS Register)
   const [cart, setCart] = useState<CartItem[]>([])
-  const [paymentMethod] = useState<'CASH' | 'CARD' | 'QRIS'>('CASH')
   const [members, setMembers] = useState<Member[]>([])
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null)
   const [cashReceived, setCashReceived] = useState<string>('')
-
-  // Dynamic Sales State (initial Rp 4.5M + POS totals)
-  const [todaySales, setTodaySales] = useState<number>(4500000)
-
-  // Form State (Inventory Editor)
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-  const [formName, setFormName] = useState<string>('')
-  const [formCategory, setFormCategory] = useState<string>('')
-  const [formPrice, setFormPrice] = useState<string>('')
-  const [formStock, setFormStock] = useState<string>('')
 
   // Delete Confirmation State
   const [deletingProductId, setDeletingProductId] = useState<number | null>(null)
@@ -313,12 +258,11 @@ function Dashboard() {
 
   const loadProducts = async () => {
     setIsLoading(true)
-    setError(null)
     try {
       const data = await fetchProducts()
       setProducts(data)
     } catch (err: any) {
-      setError(err.message || 'Gagal memuat produk.')
+      console.error(err.message || 'Gagal memuat produk.')
       showToast(tText.refresh + ' failed', 'error')
     } finally {
       setIsLoading(false)
@@ -332,14 +276,7 @@ function Dashboard() {
     }, 3000)
   }
 
-  // Calculate Stat Cards
-  const stats = useMemo(() => {
-    const totalSku = products.length
-    const totalStock = products.reduce((acc, curr) => acc + curr.stock, 0)
-    const lowStockAlerts = products.filter(p => p.stock <= 10).length
 
-    return { totalSku, totalStock, lowStockAlerts }
-  }, [products])
 
   // Filtered Products
   const filteredProducts = useMemo(() => {
@@ -362,13 +299,7 @@ function Dashboard() {
     }).format(value)
   }
 
-  // Format metric value for sales card (Rp 4.5M)
-  const formatSalesMetric = (value: number) => {
-    if (value >= 1000000) {
-      return `Rp ${(value / 1000000).toFixed(1)}M`
-    }
-    return formatCurrency(value)
-  }
+
 
   // POS Add to Cart
   const handleAddToCart = (product: Product) => {
@@ -448,8 +379,7 @@ function Dashboard() {
           })
         )
 
-        // Add to today's sales state
-        setTodaySales(prev => prev + cartTotals.total)
+
 
         showToast(`Transaksi Sukses! Kembalian: ${formatCurrency(changeAmount)}`, 'success')
         setCart([])
@@ -470,29 +400,7 @@ function Dashboard() {
     return { subtotal, tax, total }
   }, [cart])
 
-  // Open Form for Add
-  const handleOpenAddForm = () => {
-    setEditingProduct(null)
-    setFormName('')
-    setFormCategory('')
-    setFormPrice('')
-    setFormStock('')
-  }
 
-  // Populate Form for Edit — kept for inventory tab compatibility (legacy)
-  const handlePopulateEditForm = (product: Product) => {
-    setEditingProduct(product)
-    setFormName(product.name)
-    setFormCategory(product.category.name)
-    setFormPrice(product.sellingPrice.toString())
-    setFormStock(product.stock.toString())
-  }
-
-  // Form Submit Action (Inventory Editor — legacy, redirect to ProductsPage for full edit)
-  const handleSubmitProduct = async (e: React.FormEvent) => {
-    e.preventDefault()
-    showToast('Gunakan tab "Produk" untuk mengelola produk dengan lengkap.', 'error')
-  }
 
   const handleDeleteConfirm = async () => {
     if (!deletingProductId) return
