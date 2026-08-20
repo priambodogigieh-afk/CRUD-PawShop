@@ -1,0 +1,208 @@
+/* Premium Kinship Retail Design System CSS styling */
+@theme {
+  --color-primary: #5B50E5;
+  --color-primary-hover: #4A3FC8;
+  --color-primary-light: #E8E9FD;
+  
+  --color-secondary: #1B8755;
+  --color-secondary-light: #E6F7ED;
+  
+  --color-background: #F8FAFC;
+  --color-on-background: #1E2330;
+  
+  --color-surface: #ffffff;
+  --color-on-surface: #1E2330;
+  
+  --color-sidebar: #EEF0FA;
+  --color-muted: #6E7385;
+  --color-border-light: #E2E8F0;
+  
+  --color-error: #E03131;
+  --color-error-light: #FDE8E8;
+  
+  --font-sans: 'Inter', sans-serif;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #F8FAFC;
+  color: #1E2330;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* Glassmorphism & Shadow Styling */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.premium-shadow-sm {
+  box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.03), 0 1px 3px -1px rgba(0, 0, 0, 0.02);
+}
+
+.premium-shadow-md {
+  box-shadow: 0 10px 25px -5px rgba(91, 80, 229, 0.05), 0 8px 16px -6px rgba(0, 0, 0, 0.03);
+}
+
+.premium-shadow-lg {
+  box-shadow: 0 20px 40px -10px rgba(91, 80, 229, 0.08), 0 12px 24px -8px rgba(0, 0, 0, 0.04);
+}
+
+/* Pulsing Dots for status */
+.pulse-dot-green {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #1B8755;
+  box-shadow: 0 0 0 0 rgba(27, 135, 85, 0.4);
+  animation: pulse-green 2s infinite;
+}
+
+.pulse-dot-red {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #E03131;
+  box-shadow: 0 0 0 0 rgba(224, 49, 49, 0.4);
+  animation: pulse-red 2s infinite;
+}
+
+.pulse-dot-orange {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #F89E1B;
+  box-shadow: 0 0 0 0 rgba(248, 158, 27, 0.4);
+  animation: pulse-orange 2s infinite;
+}
+
+@keyframes pulse-green {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(27, 135, 85, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(27, 135, 85, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(27, 135, 85, 0);
+  }
+}
+
+@keyframes pulse-red {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(224, 49, 49, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(224, 49, 49, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(224, 49, 49, 0);
+  }
+}
+
+@keyframes pulse-orange {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(248, 158, 27, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(248, 158, 27, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(248, 158, 27, 0);
+  }
+}
+
+/* Micro-interactions & animations */
+.transition-all-default {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scale-on-hover:hover {
+  transform: scale(1.02);
+}
+
+.slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Custom Scrollbar for better UI experience */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(91, 80, 229, 0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(91, 80, 229, 0.3);
+}
+
+/* Custom input styling for premium feel */
+.premium-input {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #1E2330;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.premium-input:focus {
+  border-color: #5B50E5;
+  box-shadow: 0 0 0 4px rgba(91, 80, 229, 0.1);
+}
+
+/* Table styling refinement */
+.premium-table th {
+  padding: 12px 24px;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: #6E7385;
+  text-transform: uppercase;
+}
+
+.premium-table td {
+  padding: 16px 24px;
+  vertical-align: middle;
+}

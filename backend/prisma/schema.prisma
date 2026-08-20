@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// AUTH
+// ==========================================
+
+enum Role {
+  ADMIN
+  KASIR
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      Role
+  createdAt DateTime @default(now())
+}
+
+// ==========================================
+// INVENTORY
+// ==========================================
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  products    Product[]
+}
+
+model Brand {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id           Int       @id @default(autoincrement())
+  sku          String    @unique
+  name         String
+  categoryId   Int
+  brandId      Int?
+  costPrice    Float     @default(0)
+  sellingPrice Float     @default(0)
+  stock        Int       @default(0)
+  expiredDate  DateTime?
+  imageUrl     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  category     Category  @relation(fields: [categoryId], references: [id])
+  brand        Brand?    @relation(fields: [brandId], references: [id])
+  transactionItems TransactionItem[]
+}
+
+model Transaction {
+  id            Int               @id @default(autoincrement())
+  invoiceNumber String            @unique
+  totalAmount   Float
+  paymentMethod String            // CASH | CARD | QRIS
+  cashierId     String
+  cashierName   String
+  memberId      Int?
+  memberCode    String?
+  memberName    String?
+  pointsEarned  Int               @default(0)
+  createdAt     DateTime          @default(now())
+  items         TransactionItem[]
+
+  member        Member?           @relation(fields: [memberId], references: [id])
+}
+
+model Member {
+  id          Int           @id @default(autoincrement())
+  memberCode  String        @unique
+  name        String
+  phone       String        @unique
+  points      Int           @default(0)
+  createdAt   DateTime      @default(now())
+  transactions Transaction[]
+}
+
+model TransactionItem {
+  id            Int         @id @default(autoincrement())
+  transactionId Int
+  productId     Int
+  productName   String
+  quantity      Int
+  price         Float
+  costPrice     Float       // saved at purchase time for profit analysis
+  
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  product       Product     @relation(fields: [productId], references: [id])
+}

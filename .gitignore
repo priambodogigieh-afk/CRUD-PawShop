@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+.env
+
+# Build outputs
+dist/
+build/
+
+# IDE and tool metadata
+.agent/
+.claude/
+.windsurf/
+.gemini/
+.idea/
+.vscode/
+*.log
