@@ -121,3 +121,34 @@ Semua endpoint dilindungi menggunakan autentikasi Bearer Token (JWT), kecuali en
 *   **GET** `/api/transactions` (Riwayat Transaksi)
 *   **GET** `/api/transactions/reports` (Laporan Statistik Penjualan)
     *   Query Parameter: `type` (`daily` | `weekly` | `monthly`)
+
+---
+
+## 🧪 Testing / Pengujian
+
+Aplikasi ini menggunakan **Bun Test runner** bawaan untuk menjalankan pengujian unit (*Unit Testing*) dan pengujian integrasi (*Integration Testing*) secara cepat.
+
+### Cara Menjalankan Tes
+
+1.  Masuk ke direktori `backend`:
+    ```bash
+    cd backend
+    ```
+2.  Jalankan perintah pengujian:
+    ```bash
+    bun test
+    # atau
+    npm test
+    ```
+
+### Cakupan Tes
+
+1.  **Unit Testing (`backend/tests/unit.test.ts`)**:
+    *   Menguji fungsionalitas rumus perhitungan poin member (1 poin per kelipatan Rp 10.000).
+    *   Menguji validasi request payload untuk penambahan produk baru (deteksi field wajib, harga jual, dan stok non-negatif).
+    *   Menguji utilitas enkripsi password menggunakan modul Bun password hasher.
+2.  **Integration Testing (`backend/tests/integration.test.ts`)**:
+    *   Menguji integritas koneksi database PostgreSQL melalui Prisma ORM.
+    *   Menguji proses alur CRUD member (Create, Read, Update, Delete) secara langsung ke database.
+    *   Menguji penanganan *constraint error* database saat terjadi duplikasi data (seperti nomor telepon ganda).
+
