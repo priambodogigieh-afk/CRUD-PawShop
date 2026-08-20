@@ -215,7 +215,7 @@ function Dashboard() {
   // Cart State (POS Register)
   const [cart, setCart] = useState<CartItem[]>([])
   const [members, setMembers] = useState<Member[]>([])
-  const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null)
+  const [memberPhone, setMemberPhone] = useState<string>('')
   const [cashReceived, setCashReceived] = useState<string>('')
 
   // Delete Confirmation State
@@ -357,10 +357,13 @@ function Dashboard() {
     }
 
     try {
+      // Look up member by phone
+      const matchedMember = memberPhone.trim() !== '' ? members.find(m => m.phone === memberPhone.trim()) : null
+
       // Process transaction via atomic backend call
       const res = await createTransaction({
         paymentMethod: 'CASH',
-        memberId: selectedMemberId,
+        memberId: matchedMember ? matchedMember.id : null,
         items: cart.map(item => ({
           productId: item.product.id,
           quantity: item.quantity
@@ -384,7 +387,7 @@ function Dashboard() {
         showToast(`Transaksi Sukses! Kembalian: ${formatCurrency(changeAmount)}`, 'success')
         setCart([])
         setCashReceived('')
-        setSelectedMemberId(null)
+        setMemberPhone('')
       }
     } catch (err: any) {
       showToast(err.message || 'Gagal memproses transaksi.', 'error')
@@ -935,23 +938,37 @@ function Dashboard() {
                     </div>
                   </div>
 
-                  {/* Member Selection */}
+                  {/* Member Selection (Phone Input only) */}
                   <div className="space-y-1 bg-white p-3 rounded-xl border border-[#E2E8F0]/80 shadow-sm">
-                    <label className="block text-[10px] font-bold text-[#6E7385] uppercase tracking-wider">Member (Opsional)</label>
+                    <label className="block text-[10px] font-bold text-[#6E7385] uppercase tracking-wider">No. HP Member (Opsional)</label>
                     <div className="relative">
-                      <select
-                        value={selectedMemberId || ''}
-                        onChange={(e) => setSelectedMemberId(e.target.value ? parseInt(e.target.value) : null)}
-                        className="w-full pl-8 pr-8 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg font-label-md text-xs text-[#1E2330] focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10 appearance-none cursor-pointer transition-all duration-200 text-sm font-semibold"
-                      >
-                        <option value="">-- Pilih Member --</option>
-                        {members.map(m => (
-                          <option key={m.id} value={m.id}>{m.name} ({m.memberCode} - Poin: {m.points})</option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6E7385] pointer-events-none text-sm">person</span>
-                      <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[#6E7385] pointer-events-none text-sm">expand_more</span>
+                      <input
+                        type="text"
+                        placeholder="e.g. 08123456789"
+                        value={memberPhone}
+                        onChange={(e) => setMemberPhone(e.target.value)}
+                        className="w-full pl-8 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg font-body-md text-xs text-[#1E2330] focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10 transition-all duration-200 text-sm font-semibold"
+                      />
+                      <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6E7385] pointer-events-none text-sm">phone_iphone</span>
                     </div>
+                    {memberPhone.trim() !== '' && (() => {
+                      const found = members.find(m => m.phone === memberPhone.trim())
+                      if (found) {
+                        return (
+                          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-1 rounded-md">
+                            <span className="material-symbols-outlined text-xs">check_circle</span>
+                            <span>{found.name} ({found.memberCode} - Poin: {found.points})</span>
+                          </div>
+                        )
+                      } else {
+                        return (
+                          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-red-500 font-semibold bg-red-50 px-2 py-1 rounded-md">
+                            <span className="material-symbols-outlined text-xs">error</span>
+                            <span>Member tidak ditemukan</span>
+                          </div>
+                        )
+                      }
+                    })()}
                   </div>
 
                   {/* Static Payment Info (Cash only) */}
