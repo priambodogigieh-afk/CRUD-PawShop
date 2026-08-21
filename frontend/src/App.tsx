@@ -871,108 +871,109 @@ function Dashboard() {
         </div>
       </nav>
 
-      {/* Mobile Sidebar Overlay */}
-      {isMobileSidebarOpen && (
-        <div className="fixed inset-0 z-40 flex md:hidden">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileSidebarOpen(false)}></div>
-          <div className="relative flex flex-col bg-white w-64 h-full py-6 px-4 space-y-2 z-50 border-r border-[#E2E8F0]">
-            <div className="mb-8 flex items-center justify-between px-2">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center p-1 border border-[#E2E8F0] shrink-0 animate-pulse">
-                  <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
-                </div>
-                <h1 className="font-headline-md text-headline-md text-[#1E2330] font-extrabold tracking-wider">PAWSHOP</h1>
-                <div className="ml-1">
-                  {isOnline ? (
-                    <span className="w-2 h-2 inline-block rounded-full bg-emerald-500" title="Online" />
-                  ) : (
-                    <span className="relative inline-flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" title="Offline Mode"></span>
-                    </span>
-                  )}
-                </div>
+      {/* Mobile Sidebar Overlay & Drawer */}
+      <div className={`fixed inset-0 z-40 flex md:hidden transition-opacity duration-300 ${isMobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        {/* Backdrop overlay */}
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileSidebarOpen(false)}></div>
+        
+        {/* Sliding sidebar container */}
+        <div className={`relative flex flex-col bg-[#EEF0FA] w-64 h-full py-6 px-4 space-y-2 z-50 border-r border-[#E2E8F0] shadow-2xl transition-transform duration-300 ease-out transform ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="mb-8 flex items-center justify-between px-2">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center p-1 border border-[#E2E8F0] shrink-0 animate-pulse">
+                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
-              <button onClick={() => setIsMobileSidebarOpen(false)} className="p-1 text-[#6E7385] hover:bg-[#EEF0FA] rounded-lg">
-                <span className="material-symbols-outlined">close</span>
-              </button>
+              <h1 className="font-headline-md text-headline-md text-[#1E2330] font-extrabold tracking-wider">PAWSHOP</h1>
+              <div className="ml-1">
+                {isOnline ? (
+                  <span className="w-2 h-2 inline-block rounded-full bg-emerald-500" title="Online" />
+                ) : (
+                  <span className="relative inline-flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" title="Offline Mode"></span>
+                  </span>
+                )}
+              </div>
             </div>
+            <button onClick={() => setIsMobileSidebarOpen(false)} className="p-1.5 text-[#6E7385] hover:bg-white rounded-lg transition-colors border border-[#E2E8F0]" title="Close Menu">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
 
-            <div className="flex-1 space-y-2">
-              {!isAdmin && (
-                <button
-                  onClick={() => {
-                    setActiveTab('register')
-                    setSearchTerm('')
-                    setSelectedCategory('')
-                    setIsMobileSidebarOpen(false)
-                  }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-left ${activeTab === 'register' ? 'bg-primary text-white' : 'text-[#6E7385]'
-                    }`}
-                >
-                  <span className="material-symbols-outlined">point_of_sale</span>
-                  <span className="font-label-md text-label-md">{tText.register}</span>
-                </button>
-              )}
-
+          <div className="flex-1 space-y-2">
+            {!isAdmin && (
               <button
                 onClick={() => {
-                  setActiveTab('inventory')
+                  setActiveTab('register')
                   setSearchTerm('')
                   setSelectedCategory('')
                   setIsMobileSidebarOpen(false)
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-left ${activeTab === 'inventory' ? 'bg-[#5B50E5] text-white' : 'text-[#6E7385]'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-left transition-all active:scale-[0.98] ${activeTab === 'register' ? 'bg-[#5B50E5] text-white shadow-lg shadow-[#5B50E5]/25' : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330]'
                   }`}
               >
-                <span className="material-symbols-outlined">inventory_2</span>
-                <span className="font-label-md text-label-md">{tText.inventory}</span>
+                <span className="material-symbols-outlined">point_of_sale</span>
+                <span className="font-label-md text-label-md">{tText.register}</span>
               </button>
+            )}
 
-              {isAdmin && (
-                <button
-                  onClick={() => {
-                    setActiveTab('categories')
-                    setSearchTerm('')
-                    setIsMobileSidebarOpen(false)
-                  }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-left ${activeTab === 'categories' ? 'bg-[#5B50E5] text-white' : 'text-[#6E7385]'
-                    }`}
-                >
-                  <span className="material-symbols-outlined">category</span>
-                  <span className="font-label-md text-label-md">Kategori & Merek</span>
-                </button>
-              )}
+            <button
+              onClick={() => {
+                setActiveTab('inventory')
+                setSearchTerm('')
+                setSelectedCategory('')
+                setIsMobileSidebarOpen(false)
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-left transition-all active:scale-[0.98] ${activeTab === 'inventory' ? 'bg-[#5B50E5] text-white shadow-lg shadow-[#5B50E5]/25' : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330]'
+                }`}
+            >
+              <span className="material-symbols-outlined">inventory_2</span>
+              <span className="font-label-md text-label-md">{tText.inventory}</span>
+            </button>
 
+            {isAdmin && (
               <button
                 onClick={() => {
-                  setActiveTab('members')
+                  setActiveTab('categories')
                   setSearchTerm('')
                   setIsMobileSidebarOpen(false)
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-left ${activeTab === 'members' ? 'bg-[#5B50E5] text-white' : 'text-[#6E7385]'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-left transition-all active:scale-[0.98] ${activeTab === 'categories' ? 'bg-[#5B50E5] text-white shadow-lg shadow-[#5B50E5]/25' : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330]'
                   }`}
               >
-                <span className="material-symbols-outlined">group</span>
-                <span className="font-label-md text-label-md">Members</span>
+                <span className="material-symbols-outlined">category</span>
+                <span className="font-label-md text-label-md">Kategori & Merek</span>
               </button>
+            )}
 
-              <button
-                onClick={() => {
-                  setActiveTab('reports')
-                  setSearchTerm('')
-                  setIsMobileSidebarOpen(false)
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-left ${activeTab === 'reports' ? 'bg-[#5B50E5] text-white' : 'text-[#6E7385]'
-                  }`}
-              >
-                <span className="material-symbols-outlined">bar_chart</span>
-                <span className="font-label-md text-label-md">Reports</span>
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                setActiveTab('members')
+                setSearchTerm('')
+                setIsMobileSidebarOpen(false)
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-left transition-all active:scale-[0.98] ${activeTab === 'members' ? 'bg-[#5B50E5] text-white shadow-lg shadow-[#5B50E5]/25' : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330]'
+                }`}
+            >
+              <span className="material-symbols-outlined">group</span>
+              <span className="font-label-md text-label-md">Members</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('reports')
+                setSearchTerm('')
+                setIsMobileSidebarOpen(false)
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-left transition-all active:scale-[0.98] ${activeTab === 'reports' ? 'bg-[#5B50E5] text-white shadow-lg shadow-[#5B50E5]/25' : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330]'
+                }`}
+            >
+              <span className="material-symbols-outlined">bar_chart</span>
+              <span className="font-label-md text-label-md">Reports</span>
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background relative">
         {/* Mobile Top Navbar */}
@@ -1201,10 +1202,13 @@ function Dashboard() {
             )}
 
             {/* Mobile Cart Drawer Overlay */}
-            {!isAdmin && isCartOpenMobile && (
-              <div className="lg:hidden fixed inset-0 z-50 flex justify-end">
+            {!isAdmin && (
+              <div className={`lg:hidden fixed inset-0 z-50 flex justify-end transition-opacity duration-300 ${isCartOpenMobile ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                {/* Backdrop */}
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsCartOpenMobile(false)}></div>
-                <aside className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col z-50 animate-in slide-in-from-right duration-200">
+                
+                {/* Sliding Cart container */}
+                <aside className={`relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col z-50 transition-transform duration-300 ease-out transform ${isCartOpenMobile ? 'translate-x-0' : 'translate-x-full'}`}>
                   <div className="absolute top-4 right-4 z-20">
                     <button
                       onClick={() => setIsCartOpenMobile(false)}
