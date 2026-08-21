@@ -2,6 +2,19 @@
 
 A modern, fast, and responsive Point of Sale (POS) system designed specifically for pet shops. Built with a robust backend using Elysia.js and Prisma ORM, and a beautiful glassmorphic frontend utilizing React, Vite, and TailwindCSS.
 
+## 📸 Tampilan Aplikasi (Screenshots)
+
+### 🔑 Halaman Login
+![Halaman Login](screenshots/login.png)
+
+### 📦 Manajemen Produk (Stok)
+![Manajemen Produk](screenshots/manajemen_produk.png)
+
+### 💳 Halaman Kasir / Pembayaran (POS)
+![Halaman Kasir](screenshots/kasir_pos.png)
+
+---
+
 ## 🚀 Fitur Utama
 *   **Kasir / Pembayaran (Cash Only)**: Transaksi cepat dengan input nominal tunai wajib, kalkulasi kembalian otomatis secara real-time, dan struk belanja virtual.
 *   **Manajemen Member**: Fitur pendaftaran pelanggan untuk mengakumulasikan poin reward belanja (1 poin per Rp 10.000).
