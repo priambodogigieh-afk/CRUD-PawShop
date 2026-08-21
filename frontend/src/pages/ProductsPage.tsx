@@ -176,7 +176,9 @@ function ProductFormModal({ editing, categories, brands, onClose, onSaved }: Pro
           {/* Stock + Expired */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6E7385] mb-1.5 uppercase tracking-wide">Stok Awal *</label>
+              <label className="block text-xs font-semibold text-[#6E7385] mb-1.5 uppercase tracking-wide">
+                {editing ? 'Jumlah Stok *' : 'Stok Awal *'}
+              </label>
               <input type="number" min="0"
                 className="w-full border border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10"
                 placeholder="0" value={stock} onChange={e => setStock(e.target.value)} required />
