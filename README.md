@@ -110,6 +110,75 @@ Sebelum memulai, pastikan Anda telah memasang:
 
 ## 📖 Dokumentasi API Backend
 
+### 💻 Contoh Implementasi Kode API (Backend Endpoint)
+Berikut adalah contoh tangkapan layar penulisan kode API Backend menggunakan **Elysia.js** dan **Prisma ORM** yang menangani transaksi secara aman dan atomik:
+
+![Backend API Code](screenshots/api_code.png)
+
+```typescript
+// backend/src/routes/transactions.ts
+import { Elysia, t } from 'elysia'
+import { PrismaClient } from '@prisma/client'
+
+export function transactionsRoutes(prisma: PrismaClient) {
+  return new Elysia({ prefix: '/api/transactions' })
+    .post('', async ({ body, set, user }) => {
+      try {
+        if (!user) {
+          set.status = 401
+          return { error: 'Unauthorized: User authentication required' }
+        }
+
+        // Process checkout inside a Prisma Transaction to ensure atomic consistency
+        const result = await prisma.$transaction(async (tx) => {
+          let calculatedTotal = 0
+          const itemsToCreate = []
+
+          for (const item of body.items) {
+            const dbProduct = await tx.product.findUnique({ where: { id: item.productId } })
+            if (!dbProduct) throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan`)
+            if (dbProduct.stock < item.quantity) {
+              throw new Error(`Stok produk "${dbProduct.name}" tidak mencukupi`)
+            }
+
+            // Subtract stock
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { stock: dbProduct.stock - item.quantity }
+            })
+
+            calculatedTotal += dbProduct.sellingPrice * item.quantity
+            itemsToCreate.push({
+              productId: item.productId,
+              productName: dbProduct.name,
+              quantity: item.quantity,
+              price: dbProduct.sellingPrice,
+              costPrice: dbProduct.costPrice
+            })
+          }
+
+          // Create transaction header
+          return await tx.transaction.create({
+            data: {
+              invoiceNumber: `INV-${Date.now()}`,
+              totalAmount: calculatedTotal,
+              paymentMethod: body.paymentMethod,
+              cashierId: user.id,
+              cashierName: user.name,
+              items: { create: itemsToCreate }
+            }
+          })
+        })
+
+        return { success: true, transaction: result }
+      } catch (error: any) {
+        set.status = 400
+        return { error: error.message }
+      }
+    })
+}
+```
+
 Semua endpoint dilindungi menggunakan autentikasi Bearer Token (JWT), kecuali endpoint registrasi & login. Sertakan header berikut pada request terproteksi:
 `Authorization: Bearer <your_jwt_token>`
 
