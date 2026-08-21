@@ -206,3 +206,31 @@ body {
   padding: 16px 24px;
   vertical-align: middle;
 }
+
+/* Printable Receipt Print Media Query Rules */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  #printable-receipt-content, #printable-receipt-content * {
+    visibility: visible;
+  }
+
+  #printable-receipt-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    margin: 0;
+    padding: 10px;
+    background: white;
+    color: black !important;
+  }
+
+  /* Reset page headers, footers, and margins for printer thermal rolls */
+  @page {
+    size: auto;
+    margin: 0mm;
+  }
+}

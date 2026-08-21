@@ -225,6 +225,9 @@ function Dashboard() {
   // Delete Confirmation State
   const [deletingProductId, setDeletingProductId] = useState<number | null>(null)
 
+  // Last transaction details for printable receipt modal
+  const [lastTransaction, setLastTransaction] = useState<any | null>(null)
+
   // Toast State
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
@@ -453,6 +456,32 @@ function Dashboard() {
       }))
     }
 
+    const receiptData = {
+      invoiceNo: `INV-${Date.now().toString().slice(-8)}`,
+      date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+      cashier: user?.name || 'Kasir',
+      items: cart.map(item => ({
+        name: item.product.name,
+        price: item.product.sellingPrice,
+        quantity: item.quantity,
+        total: item.product.sellingPrice * item.quantity
+      })),
+      totals: {
+        subtotal: cartTotals.subtotal,
+        tax: cartTotals.tax,
+        total: cartTotals.total
+      },
+      cash: cashReceivedVal,
+      change: changeAmount,
+      member: matchedMember ? {
+        code: matchedMember.memberCode,
+        name: matchedMember.name,
+        points: matchedMember.points,
+        newPointsEarned: Math.floor(cartTotals.total / 10000)
+      } : null,
+      isOffline: false
+    }
+
     if (!isOnline) {
       try {
         // Save to offline queue
@@ -472,10 +501,10 @@ function Dashboard() {
         setProducts(updatedProducts)
         localStorage.setItem('pawshop_products_cache', JSON.stringify(updatedProducts))
 
+        receiptData.invoiceNo = `INV-OFF-${Date.now().toString().slice(-6)}`
+        receiptData.isOffline = true
+        setLastTransaction(receiptData)
         showToast(`Transaksi Sukses (Lokal/Offline)! Kembalian: ${formatCurrency(changeAmount)}`, 'success')
-        setCart([])
-        setCashReceived('')
-        setMemberPhone('')
       } catch (err) {
         showToast('Gagal menyimpan transaksi secara lokal.', 'error')
       }
@@ -498,14 +527,29 @@ function Dashboard() {
         setProducts(updatedProducts)
         localStorage.setItem('pawshop_products_cache', JSON.stringify(updatedProducts))
 
+        const finalReceiptData = {
+          ...receiptData,
+          invoiceNo: res.transaction?.invoiceNumber || receiptData.invoiceNo,
+          member: matchedMember ? {
+            code: matchedMember.memberCode,
+            name: matchedMember.name,
+            points: matchedMember.points + (res.transaction?.pointsEarned || 0),
+            newPointsEarned: res.transaction?.pointsEarned || 0
+          } : null
+        }
+        setLastTransaction(finalReceiptData)
         showToast(`Transaksi Sukses! Kembalian: ${formatCurrency(changeAmount)}`, 'success')
-        setCart([])
-        setCashReceived('')
-        setMemberPhone('')
       }
     } catch (err: any) {
       showToast(err.message || 'Gagal memproses transaksi.', 'error')
     }
+  }
+
+  const handleCloseReceipt = () => {
+    setCart([])
+    setCashReceived('')
+    setMemberPhone('')
+    setLastTransaction(null)
   }
 
   // Calculate Cart Totals
@@ -1229,6 +1273,150 @@ function Dashboard() {
           <ProductsPage />
         )}
       </div>
+
+      {/* Virtual Receipt Modal */}
+      {lastTransaction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto print:bg-white print:p-0 print:block">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-[#E2E8F0] flex flex-col z-50 animate-in zoom-in-95 duration-200 print:shadow-none print:border-none print:p-0 print:w-full print:max-w-none">
+            {/* The printable receipt paper area */}
+            <div id="printable-receipt-content" className="bg-white flex flex-col text-left font-mono text-xs text-[#1E2330] leading-relaxed select-text print:p-0">
+              <div className="text-center space-y-1 mb-4">
+                <h2 className="text-xl font-black tracking-widest text-[#1E2330]">PAWSHOP</h2>
+                <p className="text-[10px] text-[#6E7385]">PET SHOP & POS REGISTER</p>
+                <p className="text-[9px] text-[#6E7385]">Kawasan Bisnis PawShop, Jakarta</p>
+                <p className="text-[9px] text-[#6E7385]">Telp: (021) 555-PAWS</p>
+              </div>
+
+              <div className="border-t border-dashed border-[#E2E8F0] my-2 print:border-black"></div>
+
+              <div className="space-y-0.5 text-[10px] text-[#6E7385] print:text-black">
+                <div className="flex justify-between">
+                  <span>No. Struk:</span>
+                  <span className="font-bold text-[#1E2330] print:text-black">{lastTransaction.invoiceNo}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tanggal:</span>
+                  <span>{lastTransaction.date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Kasir:</span>
+                  <span>{lastTransaction.cashier}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Mode:</span>
+                  <span className={`font-bold ${lastTransaction.isOffline ? 'text-amber-600' : 'text-emerald-600'} print:text-black`}>
+                    {lastTransaction.isOffline ? 'OFFLINE (Pending Sync)' : 'ONLINE'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="border-t border-dashed border-[#E2E8F0] my-2 print:border-black"></div>
+
+              {/* Items Table */}
+              <div className="space-y-2">
+                <div className="grid grid-cols-12 font-bold text-[10px] text-[#1E2330] pb-1">
+                  <span className="col-span-6">Item</span>
+                  <span className="col-span-2 text-center">Qty</span>
+                  <span className="col-span-4 text-right">Total</span>
+                </div>
+                <div className="space-y-1.5">
+                  {lastTransaction.items.map((item: any, index: number) => (
+                    <div key={index} className="grid grid-cols-12 text-[10px] text-[#6E7385] print:text-black leading-tight">
+                      <div className="col-span-6 flex flex-col">
+                        <span className="font-bold text-[#1E2330] print:text-black">{item.name}</span>
+                        <span>{formatCurrency(item.price)}</span>
+                      </div>
+                      <span className="col-span-2 text-center self-center">{item.quantity}</span>
+                      <span className="col-span-4 text-right self-center font-bold text-[#1E2330] print:text-black">{formatCurrency(item.total)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-dashed border-[#E2E8F0] my-2 print:border-black"></div>
+
+              <div className="space-y-1 text-[10px]">
+                <div className="flex justify-between text-[#6E7385] print:text-black">
+                  <span>Subtotal:</span>
+                  <span>{formatCurrency(lastTransaction.totals.subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-[#6E7385] print:text-black">
+                  <span>PPN (8%):</span>
+                  <span>{formatCurrency(lastTransaction.totals.tax)}</span>
+                </div>
+                <div className="flex justify-between text-sm font-black text-[#1E2330] print:text-black pt-1">
+                  <span>TOTAL:</span>
+                  <span>{formatCurrency(lastTransaction.totals.total)}</span>
+                </div>
+              </div>
+
+              <div className="border-t border-dashed border-[#E2E8F0] my-2 print:border-black"></div>
+
+              <div className="space-y-1 text-[10px]">
+                <div className="flex justify-between text-[#6E7385] print:text-black">
+                  <span>Tunai Diterima:</span>
+                  <span className="font-bold text-[#1E2330] print:text-black">{formatCurrency(lastTransaction.cash)}</span>
+                </div>
+                <div className="flex justify-between text-[#6E7385] print:text-black">
+                  <span>Kembalian:</span>
+                  <span className="font-bold text-emerald-600 print:text-black">{formatCurrency(lastTransaction.change)}</span>
+                </div>
+              </div>
+
+              {lastTransaction.member && (
+                <>
+                  <div className="border-t border-dashed border-[#E2E8F0] my-2 print:border-black"></div>
+                  <div className="bg-[#EEF0FA]/40 p-2.5 rounded-xl space-y-1 text-[9px] text-[#6E7385] print:bg-none print:p-0 print:text-black">
+                    <div className="flex justify-between">
+                      <span>Nama Member:</span>
+                      <span className="font-bold text-[#1E2330] print:text-black">{lastTransaction.member.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Kode Member:</span>
+                      <span className="font-bold text-[#1E2330] print:text-black">{lastTransaction.member.code}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Poin Baru Didapat:</span>
+                      <span className="font-bold text-[#5B50E5] print:text-black">+{lastTransaction.member.newPointsEarned} pts</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total Poin Saat Ini:</span>
+                      <span className="font-bold text-[#1E2330] print:text-black">{lastTransaction.member.points} pts</span>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div className="border-t border-dashed border-[#E2E8F0] my-2 print:border-black"></div>
+
+              <div className="text-center space-y-1 mt-2 text-[9px] text-[#6E7385] print:text-black">
+                <p className="font-bold">*** TERIMA KASIH ***</p>
+                <p>Barang yang sudah dibeli</p>
+                <p>tidak dapat ditukar/dikembalikan.</p>
+                <p className="text-[8px] mt-2">Powered by PawShop POS v1.2</p>
+              </div>
+            </div>
+
+            {/* Modal Actions - Hidden when printing */}
+            <div className="mt-6 flex flex-col gap-2.5 print:hidden">
+              <button
+                onClick={() => window.print()}
+                className="w-full py-3 bg-[#5B50E5] hover:bg-[#4A3FC8] text-white rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all-default shadow-md shadow-[#5B50E5]/15"
+              >
+                <span className="material-symbols-outlined text-lg">print</span>
+                <span>Cetak Struk (Thermal)</span>
+              </button>
+              <button
+                onClick={handleCloseReceipt}
+                className="w-full py-3 bg-[#EEF0FA] hover:bg-white text-[#1E2330] border border-[#E2E8F0] rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all-default"
+              >
+                <span className="material-symbols-outlined text-lg">add_shopping_cart</span>
+                <span>Transaksi Baru</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
