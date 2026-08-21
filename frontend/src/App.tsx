@@ -206,6 +206,7 @@ function Dashboard() {
   // Navigation State
   const [activeTab, setActiveTab] = useState<'register' | 'inventory' | 'categories' | 'members' | 'reports'>('register')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false)
+  const [isCartOpenMobile, setIsCartOpenMobile] = useState<boolean>(false)
 
   // API State
   const [products, setProducts] = useState<Product[]>([])
@@ -536,6 +537,174 @@ function Dashboard() {
     }
   }
 
+  const renderCart = () => (
+    <>
+      <div className="p-6 border-b border-[#E2E8F0] flex justify-between items-center bg-[#EEF0FA]/30 shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-[#5B50E5]" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_basket</span>
+          <h2 className="font-headline-md text-headline-md font-extrabold text-[#1E2330]">{tText.cartTitle}</h2>
+        </div>
+        {cart.length > 0 && (
+          <button
+            onClick={handleClearCart}
+            className="text-[#6E7385] hover:text-[#E03131] transition-all-default p-1.5 hover:bg-[#EEF0FA] rounded-lg active:scale-95"
+            title="Clear Order"
+          >
+            <span className="material-symbols-outlined text-xl">delete_sweep</span>
+          </button>
+        )}
+      </div>
+
+      {/* Cart Items List */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#F8FAFC]/50">
+        {cart.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-[#6E7385]/55">
+            <span className="material-symbols-outlined text-[64px] mb-3 text-[#5B50E5]/25">add_shopping_cart</span>
+            <p className="text-sm font-semibold">{tText.cartEmpty}</p>
+            <p className="text-xs mt-1 max-w-[200px]">{tText.cartEmptyDesc}</p>
+          </div>
+        ) : (
+          cart.map((item) => (
+            <div
+              key={item.product.id}
+              className="flex items-start gap-4 p-3 bg-white rounded-xl border border-[#E2E8F0]/70 premium-shadow-sm transition-all hover:border-[#5B50E5]/30"
+            >
+              <div className="flex-1 min-w-0">
+                <h4 className="font-body-md text-sm font-bold text-[#1E2330] truncate">{item.product.name}</h4>
+                <p className="font-label-md text-xs text-[#6E7385] mt-0.5">{formatCurrency(item.product.sellingPrice)}</p>
+              </div>
+              <div className="flex items-center gap-2 bg-[#EEF0FA] border border-[#E2E8F0] rounded-xl px-1.5 py-0.5 shadow-inner">
+                <button
+                  onClick={() => handleRemoveFromCart(item.product.id)}
+                  className="text-[#6E7385] hover:text-primary transition-colors p-1 rounded-lg hover:bg-white"
+                >
+                  <span className="material-symbols-outlined text-sm font-bold">remove</span>
+                </button>
+                <span className="font-label-md text-xs font-bold text-[#1E2330] w-4 text-center">{item.quantity}</span>
+                <button
+                  onClick={() => handleAddToCart(item.product)}
+                  className="text-[#6E7385] hover:text-primary transition-colors p-1 rounded-lg hover:bg-white"
+                >
+                  <span className="material-symbols-outlined text-sm font-bold">add</span>
+                </button>
+              </div>
+              {/* Price label container with dynamic min-width to prevent clashing and wrapping */}
+              <div className="font-body-md text-sm font-bold text-[#1E2330] ml-2 min-w-[100px] text-right shrink-0">
+                {formatCurrency(item.product.sellingPrice * item.quantity)}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Financial Calculation Panel & Payment Selectors */}
+      <div className="p-6 bg-[#EEF0FA]/20 border-t border-[#E2E8F0] space-y-4 shrink-0">
+        <div className="space-y-2 bg-white p-4 rounded-xl border border-[#E2E8F0]/80 premium-shadow-sm">
+          <div className="flex justify-between font-body-md text-sm text-[#6E7385]">
+            <span>{tText.subtotal}</span>
+            <span className="font-semibold text-[#1E2330]">{formatCurrency(cartTotals.subtotal)}</span>
+          </div>
+          <div className="flex justify-between font-body-md text-sm text-[#6E7385]">
+            <span>{tText.tax}</span>
+            <span className="font-semibold text-[#1E2330]">{formatCurrency(cartTotals.tax)}</span>
+          </div>
+          <div className="flex justify-between font-headline-md text-base text-primary font-bold pt-2.5 border-t border-dashed border-[#E2E8F0]">
+            <span>{tText.total}</span>
+            <span className="text-2xl text-[#5B50E5] font-extrabold tracking-tight">{formatCurrency(cartTotals.total)}</span>
+          </div>
+        </div>
+
+        {/* Member Selection (Phone Input only) */}
+        <div className="space-y-1 bg-white p-3 rounded-xl border border-[#E2E8F0]/80 shadow-sm">
+          <label className="block text-[10px] font-bold text-[#6E7385] uppercase tracking-wider">No. HP Member (Opsional)</label>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="e.g. 08123456789"
+              value={memberPhone}
+              onChange={(e) => setMemberPhone(e.target.value)}
+              className="w-full pl-8 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg font-body-md text-xs text-[#1E2330] focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10 text-sm font-semibold"
+            />
+            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6E7385] pointer-events-none text-sm">phone_iphone</span>
+          </div>
+          {memberPhone.trim() !== '' && (() => {
+            const found = members.find(m => m.phone === memberPhone.trim())
+            if (found) {
+              return (
+                <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-1 rounded-md">
+                  <span className="material-symbols-outlined text-xs">check_circle</span>
+                  <span>{found.name} ({found.memberCode} - Poin: {found.points})</span>
+                </div>
+              )
+            } else {
+              return (
+                <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-red-500 font-semibold bg-red-50 px-2 py-1 rounded-md">
+                  <span className="material-symbols-outlined text-xs">error</span>
+                  <span>Member tidak ditemukan</span>
+                </div>
+              )
+            }
+          })()}
+        </div>
+
+        {/* Static Payment Info (Cash only) */}
+        <div className="flex items-center justify-between p-3 bg-indigo-50/50 border border-indigo-100 rounded-xl text-xs text-[#6E7385]">
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[#5B50E5] text-base">payments</span>
+            <span className="font-bold">Metode Pembayaran</span>
+          </div>
+          <span className="font-extrabold text-[#5B50E5]">Tunai (Cash)</span>
+        </div>
+
+        {/* Cash Received Input */}
+        <div className="space-y-1.5 bg-white p-3 rounded-xl border border-[#E2E8F0]/80 shadow-sm">
+          <label className="block text-[10px] font-bold text-[#6E7385] uppercase tracking-wider">Uang Tunai Diterima (Wajib)</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#6E7385]">Rp</span>
+            <input
+              type="number"
+              placeholder="0"
+              value={cashReceived}
+              onChange={(e) => setCashReceived(e.target.value)}
+              className="w-full pl-8 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg font-body-md text-xs text-[#1E2330] focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10 text-sm font-semibold"
+            />
+          </div>
+        </div>
+
+        {/* Realtime Change calculation */}
+        {parseFloat(cashReceived) > 0 && (
+          <div className={`flex justify-between items-center p-3.5 rounded-xl text-xs border ${
+            parseFloat(cashReceived) - cartTotals.total < 0
+              ? 'bg-red-50 border-red-200 text-red-700'
+              : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+          }`}>
+            <span className="font-bold">
+              {parseFloat(cashReceived) - cartTotals.total < 0 ? 'Kekurangan Uang' : 'Kembalian'}
+            </span>
+            <span className="font-extrabold text-sm">
+              {parseFloat(cashReceived) - cartTotals.total < 0
+                ? formatCurrency(Math.abs(parseFloat(cashReceived) - cartTotals.total))
+                : formatCurrency(parseFloat(cashReceived) - cartTotals.total)}
+            </span>
+          </div>
+        )}
+
+        {/* Primary CTA Action Button with glowing hover effect */}
+        <button
+          onClick={() => {
+            handleProcessPayment()
+            setIsCartOpenMobile(false)
+          }}
+          disabled={cart.length === 0 || !cashReceived || parseFloat(cashReceived) - cartTotals.total < 0}
+          className="w-full py-3.5 bg-gradient-to-r from-[#5B50E5] to-[#4A3FC8] hover:shadow-lg hover:shadow-[#5B50E5]/25 disabled:opacity-50 text-white rounded-[10px] font-extrabold active:scale-[0.98] transition-all-default flex items-center justify-center gap-2 cursor-pointer h-12 text-sm"
+        >
+          <span>{tText.process}</span>
+          <span className="material-symbols-outlined text-lg">arrow_forward</span>
+        </button>
+      </div>
+    </>
+  )
+
   return (
     <div className="h-screen bg-background text-[#1E2330] flex overflow-hidden font-sans">
       {/* Toast Notification */}
@@ -810,13 +979,46 @@ function Dashboard() {
       )}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background relative">
-        {/* Floating Mobile Hamburger Menu Trigger */}
-        <button
-          onClick={() => setIsMobileSidebarOpen(true)}
-          className="md:hidden absolute top-4 left-4 z-40 bg-[#EEF0FA] text-[#6E7385] p-2 rounded-xl border border-[#E2E8F0] shadow-md hover:bg-white transition-colors"
-        >
-          <span className="material-symbols-outlined">menu</span>
-        </button>
+        {/* Mobile Top Navbar */}
+        <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-[#E2E8F0] shrink-0 z-30">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="p-1.5 bg-[#EEF0FA] text-[#6E7385] rounded-xl border border-[#E2E8F0] hover:bg-white transition-colors"
+            >
+              <span className="material-symbols-outlined text-xl leading-none">menu</span>
+            </button>
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
+              <span className="font-extrabold text-sm text-[#1E2330] tracking-wider">PAWSHOP</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Connectivity status */}
+            {isOnline ? (
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" title="Online" />
+            ) : (
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" title="Offline Mode"></span>
+              </span>
+            )}
+            {/* Cart toggle for cashier POS */}
+            {!isAdmin && activeTab === 'register' && (
+              <button
+                onClick={() => setIsCartOpenMobile(true)}
+                className="relative p-2 bg-[#5B50E5]/10 hover:bg-[#5B50E5]/20 text-[#5B50E5] rounded-xl transition-all-default active:scale-95 flex items-center justify-center border border-[#5B50E5]/20"
+              >
+                <span className="material-symbols-outlined text-base leading-none">shopping_basket</span>
+                {cart.length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center shadow-md animate-pulse">
+                    {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
+        </header>
 
         {/* Dashboard Canvas Content */}
         {activeTab === 'inventory' ? (
@@ -995,170 +1197,29 @@ function Dashboard() {
               )}
             </div>
 
-            {/* Panel Pesanan / Order Cart (Kolom Kanan - Width: 380px, Background: #FFFFFF) */}
+            {/* Panel Pesanan / Order Cart (Desktop Aside) */}
             {!isAdmin && (
-              <aside className="w-[380px] bg-white border-l border-[#E2E8F0] flex flex-col shrink-0 h-full shadow-sm relative z-10 slide-in-right">
-                <div className="p-6 border-b border-[#E2E8F0] flex justify-between items-center bg-[#EEF0FA]/30 shrink-0">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#5B50E5]" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_basket</span>
-                    <h2 className="font-headline-md text-headline-md font-extrabold text-[#1E2330]">{tText.cartTitle}</h2>
-                  </div>
-                  {cart.length > 0 && (
-                    <button
-                      onClick={handleClearCart}
-                      className="text-[#6E7385] hover:text-[#E03131] transition-all-default p-1.5 hover:bg-[#EEF0FA] rounded-lg active:scale-95"
-                      title="Clear Order"
-                    >
-                      <span className="material-symbols-outlined text-xl">delete_sweep</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Cart Items List */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#F8FAFC]/50">
-                  {cart.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-6 text-[#6E7385]/55">
-                      <span className="material-symbols-outlined text-[64px] mb-3 text-[#5B50E5]/25">add_shopping_cart</span>
-                      <p className="text-sm font-semibold">{tText.cartEmpty}</p>
-                      <p className="text-xs mt-1 max-w-[200px]">{tText.cartEmptyDesc}</p>
-                    </div>
-                  ) : (
-                    cart.map((item) => (
-                      <div
-                        key={item.product.id}
-                        className="flex items-start gap-4 p-3 bg-white rounded-xl border border-[#E2E8F0]/70 premium-shadow-sm transition-all hover:border-[#5B50E5]/30"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-body-md text-sm font-bold text-[#1E2330] truncate">{item.product.name}</h4>
-                          <p className="font-label-md text-xs text-[#6E7385] mt-0.5">{formatCurrency(item.product.sellingPrice)}</p>
-                        </div>
-                        <div className="flex items-center gap-2 bg-[#EEF0FA] border border-[#E2E8F0] rounded-xl px-1.5 py-0.5 shadow-inner">
-                          <button
-                            onClick={() => handleRemoveFromCart(item.product.id)}
-                            className="text-[#6E7385] hover:text-primary transition-colors p-1 rounded-lg hover:bg-white"
-                          >
-                            <span className="material-symbols-outlined text-sm font-bold">remove</span>
-                          </button>
-                          <span className="font-label-md text-xs font-bold text-[#1E2330] w-4 text-center">{item.quantity}</span>
-                          <button
-                            onClick={() => handleAddToCart(item.product)}
-                            className="text-[#6E7385] hover:text-primary transition-colors p-1 rounded-lg hover:bg-white"
-                          >
-                            <span className="material-symbols-outlined text-sm font-bold">add</span>
-                          </button>
-                        </div>
-                        {/* Price label container with dynamic min-width to prevent clashing and wrapping */}
-                        <div className="font-body-md text-sm font-bold text-[#1E2330] ml-2 min-w-[100px] text-right shrink-0">
-                          {formatCurrency(item.product.sellingPrice * item.quantity)}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {/* Financial Calculation Panel & Payment Selectors */}
-                <div className="p-6 bg-[#EEF0FA]/20 border-t border-[#E2E8F0] space-y-4 shrink-0">
-                  <div className="space-y-2 bg-white p-4 rounded-xl border border-[#E2E8F0]/80 premium-shadow-sm">
-                    <div className="flex justify-between font-body-md text-sm text-[#6E7385]">
-                      <span>{tText.subtotal}</span>
-                      <span className="font-semibold text-[#1E2330]">{formatCurrency(cartTotals.subtotal)}</span>
-                    </div>
-                    <div className="flex justify-between font-body-md text-sm text-[#6E7385]">
-                      <span>{tText.tax}</span>
-                      <span className="font-semibold text-[#1E2330]">{formatCurrency(cartTotals.tax)}</span>
-                    </div>
-                    <div className="flex justify-between font-headline-md text-base text-primary font-bold pt-2.5 border-t border-dashed border-[#E2E8F0]">
-                      <span>{tText.total}</span>
-                      <span className="text-2xl text-[#5B50E5] font-extrabold tracking-tight">{formatCurrency(cartTotals.total)}</span>
-                    </div>
-                  </div>
-
-                  {/* Member Selection (Phone Input only) */}
-                  <div className="space-y-1 bg-white p-3 rounded-xl border border-[#E2E8F0]/80 shadow-sm">
-                    <label className="block text-[10px] font-bold text-[#6E7385] uppercase tracking-wider">No. HP Member (Opsional)</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="e.g. 08123456789"
-                        value={memberPhone}
-                        onChange={(e) => setMemberPhone(e.target.value)}
-                        className="w-full pl-8 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg font-body-md text-xs text-[#1E2330] focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10 transition-all duration-200 text-sm font-semibold"
-                      />
-                      <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6E7385] pointer-events-none text-sm">phone_iphone</span>
-                    </div>
-                    {memberPhone.trim() !== '' && (() => {
-                      const found = members.find(m => m.phone === memberPhone.trim())
-                      if (found) {
-                        return (
-                          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-1 rounded-md">
-                            <span className="material-symbols-outlined text-xs">check_circle</span>
-                            <span>{found.name} ({found.memberCode} - Poin: {found.points})</span>
-                          </div>
-                        )
-                      } else {
-                        return (
-                          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-red-500 font-semibold bg-red-50 px-2 py-1 rounded-md">
-                            <span className="material-symbols-outlined text-xs">error</span>
-                            <span>Member tidak ditemukan</span>
-                          </div>
-                        )
-                      }
-                    })()}
-                  </div>
-
-                  {/* Static Payment Info (Cash only) */}
-                  <div className="flex items-center justify-between p-3 bg-indigo-50/50 border border-indigo-100 rounded-xl text-xs text-[#6E7385]">
-                    <div className="flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[#5B50E5] text-base">payments</span>
-                      <span className="font-bold">Metode Pembayaran</span>
-                    </div>
-                    <span className="font-extrabold text-[#5B50E5]">Tunai (Cash)</span>
-                  </div>
-
-                  {/* Cash Received Input */}
-                  <div className="space-y-1.5 bg-white p-3 rounded-xl border border-[#E2E8F0]/80 shadow-sm">
-                    <label className="block text-[10px] font-bold text-[#6E7385] uppercase tracking-wider">Uang Tunai Diterima (Wajib)</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#6E7385]">Rp</span>
-                      <input
-                        type="number"
-                        placeholder="0"
-                        value={cashReceived}
-                        onChange={(e) => setCashReceived(e.target.value)}
-                        className="w-full pl-8 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg font-body-md text-xs text-[#1E2330] focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10 transition-all duration-200 text-sm font-semibold"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Realtime Change calculation */}
-                  {parseFloat(cashReceived) > 0 && (
-                    <div className={`flex justify-between items-center p-3.5 rounded-xl text-xs border ${
-                      parseFloat(cashReceived) - cartTotals.total < 0
-                        ? 'bg-red-50 border-red-200 text-red-700'
-                        : 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                    }`}>
-                      <span className="font-bold">
-                        {parseFloat(cashReceived) - cartTotals.total < 0 ? 'Kekurangan Uang' : 'Kembalian'}
-                      </span>
-                      <span className="font-extrabold text-sm">
-                        {parseFloat(cashReceived) - cartTotals.total < 0
-                          ? formatCurrency(Math.abs(parseFloat(cashReceived) - cartTotals.total))
-                          : formatCurrency(parseFloat(cashReceived) - cartTotals.total)}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Primary CTA Action Button with glowing hover effect */}
-                  <button
-                    onClick={handleProcessPayment}
-                    disabled={cart.length === 0 || !cashReceived || parseFloat(cashReceived) - cartTotals.total < 0}
-                    className="w-full py-3.5 bg-gradient-to-r from-[#5B50E5] to-[#4A3FC8] hover:shadow-lg hover:shadow-[#5B50E5]/25 disabled:opacity-50 text-white rounded-[10px] font-extrabold active:scale-[0.98] transition-all-default flex items-center justify-center gap-2 cursor-pointer h-12 text-sm"
-                  >
-                    <span>{tText.process}</span>
-                    <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                  </button>
-                </div>
+              <aside className="hidden lg:flex w-[380px] bg-white border-l border-[#E2E8F0] flex flex-col shrink-0 h-full shadow-sm relative z-10 slide-in-right">
+                {renderCart()}
               </aside>
+            )}
+
+            {/* Mobile Cart Drawer Overlay */}
+            {!isAdmin && isCartOpenMobile && (
+              <div className="lg:hidden fixed inset-0 z-50 flex justify-end">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsCartOpenMobile(false)}></div>
+                <aside className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col z-50 animate-in slide-in-from-right duration-200">
+                  <div className="absolute top-4 right-4 z-20">
+                    <button
+                      onClick={() => setIsCartOpenMobile(false)}
+                      className="p-1.5 text-[#6E7385] hover:bg-[#EEF0FA] rounded-lg transition-colors"
+                    >
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                  </div>
+                  {renderCart()}
+                </aside>
+              </div>
             )}
           </main>
         ) : (
