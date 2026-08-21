@@ -151,18 +151,6 @@ export default function LoginPage() {
             Hubungi Admin untuk mendapatkan akses akun
           </p>
         </div>
-
-        {/* Role badges */}
-        <div className="flex justify-center gap-3 mt-4">
-          <span className="inline-flex items-center gap-1.5 bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs px-3 py-1 rounded-full font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Admin
-          </span>
-          <span className="inline-flex items-center gap-1.5 bg-blue-100 border border-blue-200 text-blue-700 text-xs px-3 py-1 rounded-full font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-            Kasir
-          </span>
-        </div>
       </div>
     </div>
   )
