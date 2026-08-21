@@ -200,6 +200,9 @@ function Dashboard() {
   const [lang] = useState<'EN' | 'ID'>('ID')
   const tText = TRANSLATIONS[lang]
 
+  // Network Connectivity State
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine)
+
   // Navigation State
   const [activeTab, setActiveTab] = useState<'register' | 'inventory' | 'categories' | 'members' | 'reports'>('register')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false)
@@ -224,6 +227,34 @@ function Dashboard() {
   // Toast State
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
+  // Network Status Event Listeners & Auto-Sync
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      showToast('Koneksi internet terhubung kembali!', 'success')
+      syncOfflineTransactions()
+    }
+    const handleOffline = () => {
+      setIsOnline(false)
+      showToast('Koneksi internet terputus. Beralih ke Mode Offline.', 'error')
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // Sync offline transactions if online on mount
+  useEffect(() => {
+    if (isOnline) {
+      syncOfflineTransactions()
+    }
+  }, [isOnline])
+
   // Load products on mount
   useEffect(() => {
     loadProducts()
@@ -234,8 +265,13 @@ function Dashboard() {
     try {
       const data = await fetchMembers()
       setMembers(data)
+      localStorage.setItem('pawshop_members_cache', JSON.stringify(data))
     } catch (err) {
       console.error('Error fetching members:', err)
+      const cached = localStorage.getItem('pawshop_members_cache')
+      if (cached) {
+        setMembers(JSON.parse(cached))
+      }
     }
   }
 
@@ -261,11 +297,61 @@ function Dashboard() {
     try {
       const data = await fetchProducts()
       setProducts(data)
+      localStorage.setItem('pawshop_products_cache', JSON.stringify(data))
     } catch (err: any) {
       console.error(err.message || 'Gagal memuat produk.')
-      showToast(tText.refresh + ' failed', 'error')
+      const cached = localStorage.getItem('pawshop_products_cache')
+      if (cached) {
+        setProducts(JSON.parse(cached))
+        showToast('Gagal memuat produk terbaru. Menggunakan data cache.', 'success')
+      } else {
+        showToast(tText.refresh + ' failed', 'error')
+      }
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const syncOfflineTransactions = async () => {
+    const queueStr = localStorage.getItem('pawshop_offline_queue')
+    if (!queueStr) return
+
+    let queue: any[] = []
+    try {
+      queue = JSON.parse(queueStr)
+    } catch (e) {
+      console.error('Failed to parse offline queue:', e)
+      return
+    }
+
+    if (queue.length === 0) return
+
+    let successCount = 0
+    const remainingQueue = []
+
+    for (const txData of queue) {
+      try {
+        const res = await createTransaction(txData)
+        if (res.success) {
+          successCount++
+        } else {
+          remainingQueue.push(txData)
+        }
+      } catch (err) {
+        console.error('Failed to sync offline transaction:', err)
+        remainingQueue.push(txData)
+      }
+    }
+
+    if (remainingQueue.length > 0) {
+      localStorage.setItem('pawshop_offline_queue', JSON.stringify(remainingQueue))
+    } else {
+      localStorage.removeItem('pawshop_offline_queue')
+    }
+
+    if (successCount > 0) {
+      showToast(`Berhasil menyinkronkan ${successCount} transaksi offline ke server!`, 'success')
+      loadProducts()
     }
   }
 
@@ -356,33 +442,60 @@ function Dashboard() {
       return
     }
 
-    try {
-      // Look up member by phone
-      const matchedMember = memberPhone.trim() !== '' ? members.find(m => m.phone === memberPhone.trim()) : null
+    const matchedMember = memberPhone.trim() !== '' ? members.find(m => m.phone === memberPhone.trim()) : null
+    const txPayload = {
+      paymentMethod: 'CASH',
+      memberId: matchedMember ? matchedMember.id : null,
+      items: cart.map(item => ({
+        productId: item.product.id,
+        quantity: item.quantity
+      }))
+    }
 
+    if (!isOnline) {
+      try {
+        // Save to offline queue
+        const queueStr = localStorage.getItem('pawshop_offline_queue')
+        const queue = queueStr ? JSON.parse(queueStr) : []
+        queue.push(txPayload)
+        localStorage.setItem('pawshop_offline_queue', JSON.stringify(queue))
+
+        // Update local state
+        const updatedProducts = products.map((p) => {
+          const cartItem = cart.find((item) => item.product.id === p.id)
+          if (cartItem) {
+            return { ...p, stock: Math.max(0, p.stock - cartItem.quantity) }
+          }
+          return p
+        })
+        setProducts(updatedProducts)
+        localStorage.setItem('pawshop_products_cache', JSON.stringify(updatedProducts))
+
+        showToast(`Transaksi Sukses (Lokal/Offline)! Kembalian: ${formatCurrency(changeAmount)}`, 'success')
+        setCart([])
+        setCashReceived('')
+        setMemberPhone('')
+      } catch (err) {
+        showToast('Gagal menyimpan transaksi secara lokal.', 'error')
+      }
+      return
+    }
+
+    try {
       // Process transaction via atomic backend call
-      const res = await createTransaction({
-        paymentMethod: 'CASH',
-        memberId: matchedMember ? matchedMember.id : null,
-        items: cart.map(item => ({
-          productId: item.product.id,
-          quantity: item.quantity
-        }))
-      })
+      const res = await createTransaction(txPayload)
 
       if (res.success) {
         // Update local state
-        setProducts((prevProducts) =>
-          prevProducts.map((p) => {
-            const cartItem = cart.find((item) => item.product.id === p.id)
-            if (cartItem) {
-              return { ...p, stock: Math.max(0, p.stock - cartItem.quantity) }
-            }
-            return p
-          })
-        )
-
-
+        const updatedProducts = products.map((p) => {
+          const cartItem = cart.find((item) => item.product.id === p.id)
+          if (cartItem) {
+            return { ...p, stock: Math.max(0, p.stock - cartItem.quantity) }
+          }
+          return p
+        })
+        setProducts(updatedProducts)
+        localStorage.setItem('pawshop_products_cache', JSON.stringify(updatedProducts))
 
         showToast(`Transaksi Sukses! Kembalian: ${formatCurrency(changeAmount)}`, 'success')
         setCart([])
@@ -473,12 +586,24 @@ function Dashboard() {
 
       {/* Sidebar Navigasi (Kiri - Width: 240px, Background: #EEF0FA) */}
       <nav className="hidden md:flex flex-col bg-[#EEF0FA] w-[240px] h-full pt-6 pb-4 px-4 space-y-2 shrink-0 border-r border-[#E2E8F0]">
-        <div className="flex items-center gap-3 px-2 py-2">
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shadow-md border border-[#E2E8F0] shrink-0 animate-pulse">
-            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+        <div className="flex items-center justify-between px-2 py-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shadow-md border border-[#E2E8F0] shrink-0 animate-pulse">
+              <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+            </div>
+            <div>
+              <h1 className="font-headline-md text-headline-md font-extrabold text-[#1E2330] leading-tight tracking-wider">PAWSHOP</h1>
+            </div>
           </div>
-          <div>
-            <h1 className="font-headline-md text-headline-md font-extrabold text-[#1E2330] leading-tight tracking-wider">PAWSHOP</h1>
+          <div className="flex items-center">
+            {isOnline ? (
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" title="Online" />
+            ) : (
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" title="Offline Mode"></span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -592,6 +717,16 @@ function Dashboard() {
                   <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
                 </div>
                 <h1 className="font-headline-md text-headline-md text-[#1E2330] font-extrabold tracking-wider">PAWSHOP</h1>
+                <div className="ml-1">
+                  {isOnline ? (
+                    <span className="w-2 h-2 inline-block rounded-full bg-emerald-500" title="Online" />
+                  ) : (
+                    <span className="relative inline-flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" title="Offline Mode"></span>
+                    </span>
+                  )}
+                </div>
               </div>
               <button onClick={() => setIsMobileSidebarOpen(false)} className="p-1 text-[#6E7385] hover:bg-[#EEF0FA] rounded-lg">
                 <span className="material-symbols-outlined">close</span>
