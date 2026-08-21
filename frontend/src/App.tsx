@@ -10,6 +10,7 @@ import CategoriesPage from './pages/CategoriesPage'
 import ProductsPage from './pages/ProductsPage'
 import ReportsPage from './pages/ReportsPage'
 import MembersPage from './pages/MembersPage'
+import { HistoryPage } from './pages/HistoryPage'
 import './App.css'
 
 const CATEGORIES = [
@@ -204,7 +205,7 @@ function Dashboard() {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine)
 
   // Navigation State
-  const [activeTab, setActiveTab] = useState<'register' | 'inventory' | 'categories' | 'members' | 'reports'>('register')
+  const [activeTab, setActiveTab] = useState<'register' | 'inventory' | 'categories' | 'members' | 'reports' | 'history'>('register')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false)
   const [isCartOpenMobile, setIsCartOpenMobile] = useState<boolean>(false)
 
@@ -893,6 +894,20 @@ function Dashboard() {
             <span className="material-symbols-outlined">bar_chart</span>
             <span className="font-label-md text-label-md">Reports</span>
           </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('history')
+              setSearchTerm('')
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all-default text-left active:scale-[0.98] ${activeTab === 'history'
+              ? 'bg-[#5B50E5] text-white shadow-lg shadow-[#5B50E5]/25'
+              : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330] hover:translate-x-1'
+              }`}
+          >
+            <span className="material-symbols-outlined">history</span>
+            <span className="font-label-md text-label-md">Riwayat</span>
+          </button>
         </div>
 
         <div className="mt-auto pt-4 border-t border-[#E2E8F0]">
@@ -1015,6 +1030,19 @@ function Dashboard() {
               <span className="material-symbols-outlined">bar_chart</span>
               <span className="font-label-md text-label-md">Reports</span>
             </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('history')
+                setSearchTerm('')
+                setIsMobileSidebarOpen(false)
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-left transition-all active:scale-[0.98] ${activeTab === 'history' ? 'bg-[#5B50E5] text-white shadow-lg shadow-[#5B50E5]/25' : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330]'
+                }`}
+            >
+              <span className="material-symbols-outlined">history</span>
+              <span className="font-label-md text-label-md">Riwayat</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1070,6 +1098,8 @@ function Dashboard() {
           <MembersPage />
         ) : activeTab === 'reports' ? (
           <ReportsPage />
+        ) : activeTab === 'history' ? (
+          <HistoryPage onViewReceipt={(receipt) => setLastTransaction(receipt)} />
         ) : activeTab === 'register' ? (
           /* ========================================================
              1. REGISTER VIEW (POS KASIR - Tata Letak 3-Kolom)
