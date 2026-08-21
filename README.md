@@ -180,3 +180,36 @@ Aplikasi ini menggunakan **Bun Test runner** bawaan untuk menjalankan pengujian 
     *   Menguji proses alur CRUD member (Create, Read, Update, Delete) secara langsung ke database.
     *   Menguji penanganan *constraint error* database saat terjadi duplikasi data (seperti nomor telepon ganda).
 
+### Hasil Pengujian (Test Results)
+
+Berikut adalah log hasil pengujian saat dijalankan menggunakan `bun test`:
+
+```bash
+bun test v1.3.13 (bf2e2cec)
+
+tests\integration.test.ts:
+✓ Integration Tests - Database, Prisma ORM & CRUD Flow > PostgreSQL Database & Prisma ORM Connection > should query categories successfully from database [125.00ms]
+✓ Integration Tests - Database, Prisma ORM & CRUD Flow > Members CRUD Database Integration Flow > should create a new member record in the database
+✓ Integration Tests - Database, Prisma ORM & CRUD Flow > Members CRUD Database Integration Flow > should fetch the created member by ID
+✓ Integration Tests - Database, Prisma ORM & CRUD Flow > Members CRUD Database Integration Flow > should update the member points and name in database [16.00ms]
+✓ Integration Tests - Database, Prisma ORM & CRUD Flow > Members CRUD Database Integration Flow > should throw an error when attempting to insert duplicate phone number (Database constraints) [15.00ms]
+✓ Integration Tests - Database, Prisma ORM & CRUD Flow > Members CRUD Database Integration Flow > should delete the created member record from the database [141.00ms]
+
+tests\unit.test.ts:
+✓ Unit Tests - Business Logic & Request Validation > Point Calculation Logic (1 point per Rp 10.000) > should return 0 points for transaction total below Rp 10.000
+✓ Unit Tests - Business Logic & Request Validation > Point Calculation Logic (1 point per Rp 10.000) > should return 1 point for transaction total exactly Rp 10.000
+✓ Unit Tests - Business Logic & Request Validation > Point Calculation Logic (1 point per Rp 10.000) > should calculate floor points correctly for larger amounts
+✓ Unit Tests - Business Logic & Request Validation > Point Calculation Logic (1 point per Rp 10.000) > should return 0 points for negative transaction amounts
+✓ Unit Tests - Business Logic & Request Validation > Product Request Payload Validation > should fail if SKU is empty
+✓ Unit Tests - Business Logic & Request Validation > Product Request Payload Validation > should fail if name is empty
+✓ Unit Tests - Business Logic & Request Validation > Product Request Payload Validation > should fail if sellingPrice is negative
+✓ Unit Tests - Business Logic & Request Validation > Product Request Payload Validation > should fail if stock is negative
+✓ Unit Tests - Business Logic & Request Validation > Product Request Payload Validation > should pass with valid product details
+✓ Unit Tests - Business Logic & Request Validation > Password Hashing Utility > should hash and verify password correctly using Bun password API [297.00ms]
+
+ 16 pass
+ 0 fail
+ 37 expect() calls
+Ran 16 tests across 2 files. [730.00ms]
+```
+
