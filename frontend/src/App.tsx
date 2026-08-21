@@ -755,22 +755,18 @@ function Dashboard() {
 
       {/* Sidebar Navigasi (Kiri - Width: 240px, Background: #EEF0FA) */}
       <nav className="hidden md:flex flex-col bg-[#EEF0FA] w-[240px] h-full pt-6 pb-4 px-4 space-y-2 shrink-0 border-r border-[#E2E8F0]">
-        <div className="flex items-center justify-between px-2 py-2">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shadow-md border border-[#E2E8F0] shrink-0 animate-pulse">
-              <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
-            </div>
-            <div>
-              <h1 className="font-headline-md text-headline-md font-extrabold text-[#1E2330] leading-tight tracking-wider">PAWSHOP</h1>
-            </div>
+        <div className="flex items-center gap-3 px-2 py-2">
+          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shadow-md border border-[#E2E8F0] shrink-0 animate-pulse">
+            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
+            <h1 className="font-headline-md text-headline-md font-extrabold text-[#1E2330] leading-tight tracking-wider">PAWSHOP</h1>
             {isOnline ? (
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" title="Online" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" title="Online" />
             ) : (
-              <span className="relative flex h-2.5 w-2.5">
+              <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" title="Offline Mode"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" title="Offline Mode"></span>
               </span>
             )}
           </div>
@@ -856,7 +852,7 @@ function Dashboard() {
         </div>
 
         <div className="mt-auto pt-4 border-t border-[#E2E8F0]">
-          <div className="flex items-center gap-2 px-2 py-3 mb-1">
+          <div className="flex items-center gap-3 px-4 py-3 mb-1">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#5B50E5] to-teal-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
               {user?.name?.charAt(0).toUpperCase() ?? 'U'}
             </div>
@@ -867,7 +863,7 @@ function Dashboard() {
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-2 py-2 text-[#6E7385] hover:text-[#E03131] hover:bg-red-50 hover:translate-x-1 rounded-xl text-left font-bold transition-all-default"
+            className="w-full flex items-center gap-3 px-4 py-3 text-[#6E7385] hover:text-[#E03131] hover:bg-red-50/80 hover:translate-x-1 rounded-xl text-left font-bold transition-all-default"
           >
             <LogOut className="w-5 h-5" />
             <span className="font-label-md text-label-md">Logout</span>
