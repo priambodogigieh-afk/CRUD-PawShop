@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 
-describe('Integration Tests - Database, Prisma ORM & CRUD Flow', () => {
+describe('Pengujian Integrasi - Database, Prisma ORM & Alur CRUD', () => {
   let prisma: PrismaClient
   let pool: pg.Pool
 
@@ -18,20 +18,20 @@ describe('Integration Tests - Database, Prisma ORM & CRUD Flow', () => {
     if (pool) await pool.end()
   })
 
-  describe('PostgreSQL Database & Prisma ORM Connection', () => {
-    it('should query categories successfully from database', async () => {
+  describe('Koneksi Database PostgreSQL & Prisma ORM', () => {
+    it('harus berhasil mengambil data kategori dari database', async () => {
       const categories = await prisma.category.findMany()
       expect(categories).toBeDefined()
       expect(Array.isArray(categories)).toBe(true)
     })
   })
 
-  describe('Members CRUD Database Integration Flow', () => {
+  describe('Alur Integrasi Database CRUD Member', () => {
     const testMemberPhone = `08999${Math.floor(1000 + Math.random() * 9000)}`
     const testMemberCode = `TEST-${Math.floor(100000 + Math.random() * 900000)}`
     let createdMemberId: number
 
-    it('should create a new member record in the database', async () => {
+    it('harus berhasil membuat data member baru di database', async () => {
       const member = await prisma.member.create({
         data: {
           memberCode: testMemberCode,
@@ -50,7 +50,7 @@ describe('Integration Tests - Database, Prisma ORM & CRUD Flow', () => {
       createdMemberId = member.id
     })
 
-    it('should fetch the created member by ID', async () => {
+    it('harus berhasil mengambil data member berdasarkan ID', async () => {
       const member = await prisma.member.findUnique({
         where: { id: createdMemberId }
       })
@@ -60,7 +60,7 @@ describe('Integration Tests - Database, Prisma ORM & CRUD Flow', () => {
       expect(member?.phone).toBe(testMemberPhone)
     })
 
-    it('should update the member points and name in database', async () => {
+    it('harus berhasil memperbarui poin dan nama member di database', async () => {
       const updated = await prisma.member.update({
         where: { id: createdMemberId },
         data: {
@@ -74,14 +74,14 @@ describe('Integration Tests - Database, Prisma ORM & CRUD Flow', () => {
       expect(updated.points).toBe(25)
     })
 
-    it('should throw an error when attempting to insert duplicate phone number (Database constraints)', async () => {
+    it('harus melempar error saat mencoba memasukkan nomor telepon duplikat (Batasan Database)', async () => {
       let threwError = false
       try {
         await prisma.member.create({
           data: {
             memberCode: `TEST-DUP-${Math.floor(1000 + Math.random() * 9000)}`,
             name: 'Duplicate Phone User',
-            phone: testMemberPhone // duplicate phone
+            phone: testMemberPhone // nomor telepon duplikat
           }
         })
       } catch (err) {
@@ -91,7 +91,7 @@ describe('Integration Tests - Database, Prisma ORM & CRUD Flow', () => {
       expect(threwError).toBe(true)
     })
 
-    it('should delete the created member record from the database', async () => {
+    it('harus berhasil menghapus data member dari database', async () => {
       const deleted = await prisma.member.delete({
         where: { id: createdMemberId }
       })
@@ -99,7 +99,7 @@ describe('Integration Tests - Database, Prisma ORM & CRUD Flow', () => {
       expect(deleted).toBeDefined()
       expect(deleted.id).toBe(createdMemberId)
 
-      // Verify deletion
+      // Verifikasi penghapusan
       const check = await prisma.member.findUnique({
         where: { id: createdMemberId }
       })

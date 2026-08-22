@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'bun:test'
 
-// Helper function to calculate points (1 point per Rp 10.000)
+// Fungsi pembantu untuk menghitung poin (1 poin per Rp 10.000)
 export function calculatePoints(totalAmount: number): number {
   if (totalAmount < 0) return 0
   return Math.floor(totalAmount / 10000)
 }
 
-// Mock validation helper for product request payload
+// Fungsi pembantu validasi payload request produk
 export function validateProductPayload(payload: {
   sku: string
   name: string
@@ -32,31 +32,31 @@ export function validateProductPayload(payload: {
   return { success: true }
 }
 
-describe('Unit Tests - Business Logic & Request Validation', () => {
+describe('Pengujian Unit - Logika Bisnis & Validasi Request', () => {
   
-  describe('Point Calculation Logic (1 point per Rp 10.000)', () => {
-    it('should return 0 points for transaction total below Rp 10.000', () => {
+  describe('Logika Perhitungan Poin (1 poin per Rp 10.000)', () => {
+    it('harus mengembalikan 0 poin untuk total transaksi di bawah Rp 10.000', () => {
       expect(calculatePoints(5000)).toBe(0)
       expect(calculatePoints(9999)).toBe(0)
     })
 
-    it('should return 1 point for transaction total exactly Rp 10.000', () => {
+    it('harus mengembalikan 1 poin untuk total transaksi tepat Rp 10.000', () => {
       expect(calculatePoints(10000)).toBe(1)
     })
 
-    it('should calculate floor points correctly for larger amounts', () => {
+    it('harus menghitung poin pembulatan ke bawah dengan benar untuk nominal besar', () => {
       expect(calculatePoints(15000)).toBe(1)
       expect(calculatePoints(25500)).toBe(2)
       expect(calculatePoints(100000)).toBe(10)
     })
 
-    it('should return 0 points for negative transaction amounts', () => {
+    it('harus mengembalikan 0 poin untuk nominal transaksi negatif', () => {
       expect(calculatePoints(-5000)).toBe(0)
     })
   })
 
-  describe('Product Request Payload Validation', () => {
-    it('should fail if SKU is empty', () => {
+  describe('Validasi Payload Request Produk', () => {
+    it('harus gagal jika SKU kosong', () => {
       const result = validateProductPayload({
         sku: '   ',
         name: 'Royal Canin Maxi',
@@ -68,7 +68,7 @@ describe('Unit Tests - Business Logic & Request Validation', () => {
       expect(result.error).toBe('SKU tidak boleh kosong')
     })
 
-    it('should fail if name is empty', () => {
+    it('harus gagal jika nama kosong', () => {
       const result = validateProductPayload({
         sku: 'RC-MAXI',
         name: '',
@@ -80,7 +80,7 @@ describe('Unit Tests - Business Logic & Request Validation', () => {
       expect(result.error).toBe('Nama produk tidak boleh kosong')
     })
 
-    it('should fail if sellingPrice is negative', () => {
+    it('harus gagal jika harga jual negatif', () => {
       const result = validateProductPayload({
         sku: 'RC-MAXI',
         name: 'Royal Canin Maxi',
@@ -92,7 +92,7 @@ describe('Unit Tests - Business Logic & Request Validation', () => {
       expect(result.error).toBe('Harga jual tidak boleh negatif')
     })
 
-    it('should fail if stock is negative', () => {
+    it('harus gagal jika stok negatif', () => {
       const result = validateProductPayload({
         sku: 'RC-MAXI',
         name: 'Royal Canin Maxi',
@@ -104,7 +104,7 @@ describe('Unit Tests - Business Logic & Request Validation', () => {
       expect(result.error).toBe('Stok tidak boleh negatif')
     })
 
-    it('should pass with valid product details', () => {
+    it('harus lolos dengan detail produk yang valid', () => {
       const result = validateProductPayload({
         sku: 'RC-MAXI',
         name: 'Royal Canin Maxi',
@@ -116,8 +116,8 @@ describe('Unit Tests - Business Logic & Request Validation', () => {
     })
   })
 
-  describe('Password Hashing Utility', () => {
-    it('should hash and verify password correctly using Bun password API', async () => {
+  describe('Utilitas Hashing Password', () => {
+    it('harus melakukan hash dan verifikasi password dengan benar menggunakan Bun password API', async () => {
       const password = 'mySecretPassword'
       const hashed = await Bun.password.hash(password)
       expect(hashed).toBeDefined()
