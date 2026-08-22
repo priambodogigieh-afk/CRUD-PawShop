@@ -135,8 +135,12 @@ const app = new Elysia()
       // Members CRUD
       .use(membersRoutes(prisma))
   )
-  .listen(3000)
 
-console.log(
-  `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
-)
+if (!process.env.VERCEL) {
+  app.listen(3000)
+  console.log(
+    `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
+  )
+}
+
+export default app
