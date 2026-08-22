@@ -11,7 +11,6 @@ import ProductsPage from './pages/ProductsPage'
 import ReportsPage from './pages/ReportsPage'
 import MembersPage from './pages/MembersPage'
 import { HistoryPage } from './pages/HistoryPage'
-import './App.css'
 
 const CATEGORIES = [
   'Makanan Kucing',
