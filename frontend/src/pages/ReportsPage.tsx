@@ -63,7 +63,7 @@ export default function ReportsPage() {
   const maxVal = chartData.length > 0 ? Math.max(...chartData.map(d => d.revenue), 100000) : 100000
 
   return (
-    <main className="flex-1 p-6 space-y-6 overflow-y-auto bg-[#F8FAFC]">
+    <main className="flex-1 p-6 space-y-6 overflow-y-auto bg-[#F8FAFC] animate-fade-in-up">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
