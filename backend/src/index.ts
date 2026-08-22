@@ -67,10 +67,10 @@ const app = new Elysia()
         success: true,
         user: { id: newUser.id, username: newUser.username, name: newUser.name, role: newUser.role }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Register error:', error)
       set.status = 500
-      return { error: 'Gagal melakukan registrasi' }
+      return { error: 'Gagal melakukan registrasi', details: error?.message || String(error) }
     }
   }, {
     body: t.Object({
@@ -102,10 +102,10 @@ const app = new Elysia()
         token,
         user: { id: user.id, username: user.username, name: user.name, role: user.role }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error)
       set.status = 500
-      return { error: 'Gagal melakukan login' }
+      return { error: 'Gagal melakukan login', details: error?.message || String(error) }
     }
   }, {
     body: t.Object({ username: t.String(), password: t.String() })
