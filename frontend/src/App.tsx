@@ -1103,7 +1103,7 @@ function Dashboard() {
           /* ========================================================
              1. REGISTER VIEW (POS KASIR - Tata Letak 3-Kolom)
              ======================================================== */
-          <main className="flex-1 flex overflow-hidden">
+          <main className="flex-1 flex overflow-hidden animate-fade-in-up">
             {/* Products Catalog Grid (Kolom Tengah) */}
             <div className="flex-1 overflow-y-auto p-6 flex flex-col">
               {/* SaaS Greetings Header */}

@@ -349,7 +349,7 @@ export default function ProductsPage() {
   }
 
   return (
-    <main className="flex-1 p-6 space-y-5 overflow-y-auto">
+    <main className="flex-1 p-6 space-y-5 overflow-y-auto animate-fade-in-up">
       {/* Toast */}
       {toast && (
         <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-semibold flex items-center gap-2 ${toast.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
