@@ -4,16 +4,9 @@ import bcrypt from 'bcryptjs'
 declare const Bun: any;
 
 export async function hashPassword(password: string): Promise<string> {
-  if (typeof Bun !== 'undefined' && Bun.password) {
-    return Bun.password.hash(password)
-  }
   return bcrypt.hash(password, 10)
 }
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  if (typeof Bun !== 'undefined' && Bun.password) {
-    return Bun.password.verify(password, hash)
-  }
-  const normalizedHash = hash.replace(/^\$2y\$/, '$2a$')
-  return bcrypt.compare(password, normalizedHash)
+  return bcrypt.compare(password, hash)
 }

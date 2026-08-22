@@ -11,9 +11,9 @@ async function main() {
   console.log('=== SEEDING CORE DATA (USERS, CATEGORIES, BRANDS, PRODUCTS) ===')
 
   // 1. Seed Users
+  const hashedAdmin = await hashPassword('admin123')
   let adminUser = await prisma.user.findUnique({ where: { username: 'admin' } })
   if (!adminUser) {
-    const hashedAdmin = await hashPassword('admin123')
     adminUser = await prisma.user.create({
       data: {
         username: 'admin',
@@ -24,12 +24,16 @@ async function main() {
     })
     console.log('Seeded Admin account.')
   } else {
-    console.log('Admin account already exists.')
+    await prisma.user.update({
+      where: { username: 'admin' },
+      data: { password: hashedAdmin }
+    })
+    console.log('Updated Admin password to bcrypt.')
   }
 
+  const hashedKasir = await hashPassword('kasir123')
   let cashierUser = await prisma.user.findUnique({ where: { username: 'kasir' } })
   if (!cashierUser) {
-    const hashedKasir = await hashPassword('kasir123')
     cashierUser = await prisma.user.create({
       data: {
         username: 'kasir',
@@ -40,7 +44,11 @@ async function main() {
     })
     console.log('Seeded Cashier account.')
   } else {
-    console.log('Cashier account already exists.')
+    await prisma.user.update({
+      where: { username: 'kasir' },
+      data: { password: hashedKasir }
+    })
+    console.log('Updated Cashier password to bcrypt.')
   }
 
   // 2. Seed Categories
