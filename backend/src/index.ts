@@ -116,7 +116,7 @@ const app = new Elysia()
   .group('', (app) =>
     app
       .guard({
-        beforeHandle({ user, set }) {
+        beforeHandle({ user, set }: any) {
           if (!user) {
             set.status = 401
             return { error: 'Unauthorized: Missing or invalid token' }

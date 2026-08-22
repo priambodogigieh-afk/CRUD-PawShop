@@ -176,7 +176,7 @@ export function transactionsRoutes(prisma: PrismaClient) {
     })
 
     // POST create transaction (checkout)
-    .post('', async ({ body, set, user }) => {
+    .post('', async ({ body, set, user }: any) => {
       try {
         if (!user) {
           set.status = 401
