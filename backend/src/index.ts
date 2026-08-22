@@ -11,6 +11,7 @@ import { brandsRoutes } from './routes/brands'
 import { productsRoutes } from './routes/products'
 import { transactionsRoutes } from './routes/transactions'
 import { membersRoutes } from './routes/members'
+import { hashPassword, verifyPassword } from './utils/password'
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
 const adapter = new PrismaPg(pool)
@@ -58,7 +59,7 @@ const app = new Elysia()
         set.status = 400
         return { error: 'Username sudah digunakan' }
       }
-      const hashedPassword = await Bun.password.hash(password)
+      const hashedPassword = await hashPassword(password)
       const newUser = await prisma.user.create({
         data: { username, password: hashedPassword, name, role }
       })
@@ -88,7 +89,7 @@ const app = new Elysia()
         set.status = 401
         return { error: 'Username atau password salah' }
       }
-      const isMatch = await Bun.password.verify(password, user.password)
+      const isMatch = await verifyPassword(password, user.password)
       if (!isMatch) {
         set.status = 401
         return { error: 'Username atau password salah' }

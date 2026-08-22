@@ -117,16 +117,17 @@ describe('Pengujian Unit - Logika Bisnis & Validasi Request', () => {
   })
 
   describe('Utilitas Hashing Password', () => {
-    it('harus melakukan hash dan verifikasi password dengan benar menggunakan Bun password API', async () => {
+    it('harus melakukan hash dan verifikasi password dengan benar menggunakan custom password utility', async () => {
       const password = 'mySecretPassword'
-      const hashed = await Bun.password.hash(password)
+      const { hashPassword, verifyPassword } = await import('../src/utils/password')
+      const hashed = await hashPassword(password)
       expect(hashed).toBeDefined()
       expect(hashed).not.toBe(password)
 
-      const isMatch = await Bun.password.verify(password, hashed)
+      const isMatch = await verifyPassword(password, hashed)
       expect(isMatch).toBe(true)
 
-      const isWrongMatch = await Bun.password.verify('wrongPassword', hashed)
+      const isWrongMatch = await verifyPassword('wrongPassword', hashed)
       expect(isWrongMatch).toBe(false)
     })
   })
