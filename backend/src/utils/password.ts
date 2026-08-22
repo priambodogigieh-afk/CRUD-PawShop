@@ -14,5 +14,6 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   if (typeof Bun !== 'undefined' && Bun.password) {
     return Bun.password.verify(password, hash)
   }
-  return bcrypt.compare(password, hash)
+  const normalizedHash = hash.replace(/^\$2y\$/, '$2a$')
+  return bcrypt.compare(password, normalizedHash)
 }
