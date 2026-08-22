@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { LogOut } from 'lucide-react'
 import type { Product, Member } from './types'
-import { fetchProducts, createTransaction, fetchMembers } from './api'
+import { fetchProducts, createTransaction, fetchMembers, deleteProduct } from './api'
 import { useAuth } from './context/AuthContext'
 import LoginPage from './pages/LoginPage'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -568,10 +568,7 @@ function Dashboard() {
     if (!deletingProductId) return
 
     try {
-      await fetch(`http://localhost:3000/api/products/${deletingProductId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('petshop_token') ?? ''}` }
-      })
+      await deleteProduct(deletingProductId)
       setProducts((prev) => prev.filter((p) => p.id !== deletingProductId))
       setCart((prevCart) => prevCart.filter((item) => item.product.id !== deletingProductId))
       showToast(tText.toastProductDeleted, 'success')

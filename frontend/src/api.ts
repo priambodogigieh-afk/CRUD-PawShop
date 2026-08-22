@@ -1,7 +1,7 @@
 import type { Category, Brand, Product, CategoryInput, BrandInput, ProductInput, Transaction, ReportResponse, Member, MemberInput } from './types'
 import { getStoredToken } from './context/AuthContext'
 
-const API_BASE = 'http://localhost:3000/api'
+const API_BASE = import.meta.env.DEV ? 'http://localhost:3000/api' : '/api'
 
 function authHeaders(contentType = true): Record<string, string> {
   const token = getStoredToken()
