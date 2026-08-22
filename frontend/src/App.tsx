@@ -907,33 +907,24 @@ function Dashboard() {
             <span className="material-symbols-outlined">history</span>
             <span className="font-label-md text-label-md">Riwayat</span>
           </button>
-
-          {/* 'Upgrade to Pro' Card */}
-          <div className="bg-white p-4.5 rounded-2xl border border-[#E2E8F0] shadow-sm space-y-3 mt-6">
-            <div className="w-8 h-8 rounded-lg bg-[#5B50E5]/10 flex items-center justify-center text-[#5B50E5]">
-              <span className="material-symbols-outlined text-sm font-bold">star</span>
-            </div>
-            <div className="space-y-1">
-              <h4 className="font-bold text-xs text-[#1E2330]">Upgrade to Pro</h4>
-              <p className="text-[10px] text-[#6E7385] leading-relaxed">Dapatkan 1 bulan gratis dan buka fitur dasbor premium.</p>
-            </div>
-            <button className="w-full py-2 bg-[#5B50E5] hover:bg-[#4A3FC8] text-white rounded-xl text-[10px] font-extrabold transition-all-default active:scale-95 shadow-sm">
-              Upgrade
-            </button>
-          </div>
         </div>
 
-        <div className="mt-auto pt-4 border-t border-[#E2E8F0] space-y-1">
-          <button className="w-full flex items-center gap-3 px-4 py-2 text-[#6E7385] hover:text-[#1E2330] rounded-xl text-left text-xs font-bold transition-all-default">
-            <span className="material-symbols-outlined text-base">help_outline</span>
-            <span>Help & information</span>
-          </button>
+        <div className="mt-auto pt-4 border-t border-[#E2E8F0]">
+          <div className="flex items-center gap-3 px-4 py-3 mb-1">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#5B50E5] to-teal-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {user?.name?.charAt(0).toUpperCase() ?? 'U'}
+            </div>
+            <div className="overflow-hidden">
+              <p className="font-semibold text-sm text-[#1E2330] leading-tight truncate">{user?.name ?? ''}</p>
+              <p className="text-[10px] text-[#6E7385] leading-none">{user?.role}</p>
+            </div>
+          </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2 text-[#6E7385] hover:text-[#E03131] hover:bg-red-50/50 rounded-xl text-left text-xs font-bold transition-all-default"
+            className="w-full flex items-center gap-3 px-4 py-3 text-[#6E7385] hover:text-[#E03131] hover:bg-red-50/80 hover:translate-x-1 rounded-xl text-left font-bold transition-all-default"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Log out</span>
+            <LogOut className="w-5 h-5" />
+            <span className="font-label-md text-label-md">Logout</span>
           </button>
         </div>
       </nav>
@@ -1116,15 +1107,10 @@ function Dashboard() {
             {/* Products Catalog Grid (Kolom Tengah) */}
             <div className="flex-1 overflow-y-auto p-6 flex flex-col">
               {/* SaaS Greetings Header */}
-              <div className="mb-6 flex justify-between items-center shrink-0">
-                <div className="space-y-0.5">
-                  <h2 className="text-lg font-extrabold text-[#1E2330]">Hello, {user?.name || 'Margaret'}</h2>
-                  <p className="text-[10px] text-[#6E7385] font-semibold">Track team progress here. You almost reach a goal!</p>
-                </div>
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white border border-[#E2E8F0] rounded-xl text-[10px] font-bold text-[#6E7385] shadow-sm">
-                  <span className="material-symbols-outlined text-xs">calendar_today</span>
-                  <span>{new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                </div>
+              {/* SaaS Greetings Header */}
+              <div className="mb-6 shrink-0">
+                <h2 className="text-lg font-extrabold text-[#1E2330]">Hello, {user?.name || 'Margaret'}</h2>
+                <p className="text-[10px] text-[#6E7385] font-semibold">Track team progress here. You almost reach a goal!</p>
               </div>
 
               {/* POS Filter Controls */}

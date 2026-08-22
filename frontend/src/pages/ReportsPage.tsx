@@ -104,50 +104,6 @@ export default function ReportsPage() {
         </div>
       ) : summary ? (
         <>
-          {/* SaaS Dashboard Summary Cards Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 select-none mb-6">
-            {/* Card 1: Finished Tasks */}
-            <div className="bg-white p-5 rounded-3xl border border-[#E2E8F0] shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shrink-0">
-                  <span className="material-symbols-outlined text-lg font-bold">handshake</span>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-[10px] text-[#6E7385] font-extrabold uppercase tracking-wider">Finished</p>
-                  <p className="text-xl font-black text-[#1E2330]">{summary.transactionsCount}</p>
-                </div>
-              </div>
-              <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">+8 tasks</span>
-            </div>
-
-            {/* Card 2: Tracked Time */}
-            <div className="bg-white p-5 rounded-3xl border border-[#E2E8F0] shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 shrink-0">
-                  <span className="material-symbols-outlined text-lg font-bold">timer</span>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-[10px] text-[#6E7385] font-extrabold uppercase tracking-wider">Tracked</p>
-                  <p className="text-xl font-black text-[#1E2330]">31h</p>
-                </div>
-              </div>
-              <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-100">-6 hours</span>
-            </div>
-
-            {/* Card 3: Efficiency */}
-            <div className="bg-white p-5 rounded-3xl border border-[#E2E8F0] shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center border border-teal-100 shrink-0">
-                  <span className="material-symbols-outlined text-lg font-bold">query_stats</span>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-[10px] text-[#6E7385] font-extrabold uppercase tracking-wider">Efficiency</p>
-                  <p className="text-xl font-black text-[#1E2330]">93%</p>
-                </div>
-              </div>
-              <span className="text-[9px] font-bold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-100">+12%</span>
-            </div>
-          </div>
 
           {/* Metrics Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
