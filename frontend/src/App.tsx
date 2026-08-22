@@ -798,11 +798,11 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Sidebar Navigasi (Kiri - Width: 240px, Background: #F8FAFC) */}
-      <nav className="hidden md:flex flex-col bg-[#F8FAFC] w-[240px] h-full pt-6 pb-4 px-4 space-y-2 shrink-0 border-r border-[#E2E8F0] select-none">
-        <div className="flex items-center gap-3 px-2 py-2 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#5B50E5] to-teal-400 flex items-center justify-center p-1.5 shadow-md border border-[#E2E8F0]/30 shrink-0">
-            <span className="material-symbols-outlined text-white text-xl font-bold">hub</span>
+      {/* Sidebar Navigasi (Kiri - Width: 240px, Background: #EEF0FA) */}
+      <nav className="hidden md:flex flex-col bg-[#EEF0FA] w-[240px] h-full pt-6 pb-4 px-4 space-y-2 shrink-0 border-r border-[#E2E8F0]">
+        <div className="flex items-center gap-3 px-2 py-2">
+          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shadow-md border border-[#E2E8F0] shrink-0 animate-pulse">
+            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <div className="flex items-center gap-2">
             <h1 className="font-headline-md text-headline-md font-extrabold text-[#1E2330] leading-tight tracking-wider">PAWSHOP</h1>
@@ -817,7 +817,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="flex-1 space-y-1.5 overflow-y-auto pr-1">
+        <div className="flex-1 space-y-2 pt-8">
           {!isAdmin && (
             <button
               onClick={() => {
@@ -830,8 +830,8 @@ function Dashboard() {
                 : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330] hover:translate-x-1'
                 }`}
             >
-              <span className="material-symbols-outlined">home</span>
-              <span className="font-label-md text-label-md">Home (POS)</span>
+              <span className="material-symbols-outlined">point_of_sale</span>
+              <span className="font-label-md text-label-md">{tText.register}</span>
             </button>
           )}
 
@@ -846,36 +846,8 @@ function Dashboard() {
               : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330] hover:translate-x-1'
               }`}
           >
-            <span className="material-symbols-outlined">folder</span>
-            <span className="font-label-md text-label-md">Projects (Stok)</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('history')
-              setSearchTerm('')
-            }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all-default text-left active:scale-[0.98] ${activeTab === 'history'
-              ? 'bg-[#5B50E5] text-white shadow-lg shadow-[#5B50E5]/25'
-              : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330] hover:translate-x-1'
-              }`}
-          >
-            <span className="material-symbols-outlined">task_alt</span>
-            <span className="font-label-md text-label-md">Tasks (Riwayat)</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('members')
-              setSearchTerm('')
-            }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all-default text-left active:scale-[0.98] ${activeTab === 'members'
-              ? 'bg-[#5B50E5] text-white shadow-lg shadow-[#5B50E5]/25'
-              : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330] hover:translate-x-1'
-              }`}
-          >
-            <span className="material-symbols-outlined">group</span>
-            <span className="font-label-md text-label-md">Team (Members)</span>
+            <span className="material-symbols-outlined">inventory_2</span>
+            <span className="font-label-md text-label-md">{tText.inventory}</span>
           </button>
 
           {isAdmin && (
@@ -890,9 +862,24 @@ function Dashboard() {
                 }`}
             >
               <span className="material-symbols-outlined">category</span>
-              <span className="font-label-md text-label-md">Categories</span>
+              <span className="font-label-md text-label-md">Kategori & Merek</span>
             </button>
           )}
+
+
+          <button
+            onClick={() => {
+              setActiveTab('members')
+              setSearchTerm('')
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all-default text-left active:scale-[0.98] ${activeTab === 'members'
+              ? 'bg-[#5B50E5] text-white shadow-lg shadow-[#5B50E5]/25'
+              : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330] hover:translate-x-1'
+              }`}
+          >
+            <span className="material-symbols-outlined">group</span>
+            <span className="font-label-md text-label-md">Members</span>
+          </button>
 
           <button
             onClick={() => {
@@ -904,37 +891,41 @@ function Dashboard() {
               : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330] hover:translate-x-1'
               }`}
           >
-            <span className="material-symbols-outlined">settings</span>
-            <span className="font-label-md text-label-md">Settings (Reports)</span>
+            <span className="material-symbols-outlined">bar_chart</span>
+            <span className="font-label-md text-label-md">Reports</span>
           </button>
 
-          {/* 'Upgrade to Pro' Card */}
-          <div className="bg-white p-4 rounded-2xl border border-[#E2E8F0] shadow-sm space-y-3 mt-6">
-            <div className="w-8 h-8 rounded-lg bg-[#5B50E5]/10 flex items-center justify-center text-[#5B50E5]">
-              <span className="material-symbols-outlined text-sm font-bold">star</span>
-            </div>
-            <div className="space-y-1">
-              <h4 className="font-bold text-xs text-[#1E2330]">Upgrade to Pro</h4>
-              <p className="text-[10px] text-[#6E7385] leading-relaxed">Get 1 month free and unlock premium dashboard features.</p>
-            </div>
-            <button className="w-full py-2 bg-[#5B50E5] hover:bg-[#4A3FC8] text-white rounded-xl text-[10px] font-extrabold transition-all-default active:scale-95 shadow-sm">
-              Upgrade
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              setActiveTab('history')
+              setSearchTerm('')
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all-default text-left active:scale-[0.98] ${activeTab === 'history'
+              ? 'bg-[#5B50E5] text-white shadow-lg shadow-[#5B50E5]/25'
+              : 'text-[#6E7385] hover:bg-white hover:text-[#1E2330] hover:translate-x-1'
+              }`}
+          >
+            <span className="material-symbols-outlined">history</span>
+            <span className="font-label-md text-label-md">Riwayat</span>
+          </button>
         </div>
 
-        {/* Bottom Links */}
-        <div className="mt-auto pt-4 border-t border-[#E2E8F0] space-y-1">
-          <button className="w-full flex items-center gap-3 px-4 py-2.5 text-[#6E7385] hover:text-[#1E2330] rounded-xl text-left text-xs font-bold transition-all-default">
-            <span className="material-symbols-outlined text-base">help_outline</span>
-            <span>Help & information</span>
-          </button>
+        <div className="mt-auto pt-4 border-t border-[#E2E8F0]">
+          <div className="flex items-center gap-3 px-4 py-3 mb-1">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#5B50E5] to-teal-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {user?.name?.charAt(0).toUpperCase() ?? 'U'}
+            </div>
+            <div className="overflow-hidden">
+              <p className="font-semibold text-sm text-[#1E2330] leading-tight truncate">{user?.name ?? ''}</p>
+              <p className="text-[10px] text-[#6E7385] leading-none">{user?.role}</p>
+            </div>
+          </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-[#6E7385] hover:text-[#E03131] hover:bg-red-50/50 rounded-xl text-left text-xs font-bold transition-all-default"
+            className="w-full flex items-center gap-3 px-4 py-3 text-[#6E7385] hover:text-[#E03131] hover:bg-red-50/80 hover:translate-x-1 rounded-xl text-left font-bold transition-all-default"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Log out</span>
+            <LogOut className="w-5 h-5" />
+            <span className="font-label-md text-label-md">Logout</span>
           </button>
         </div>
       </nav>
@@ -1097,63 +1088,6 @@ function Dashboard() {
             )}
           </div>
         </header>
-
-        {/* SaaS Dashboard Top Header - Visible on desktop, containing Hello banner and Date Picker */}
-        <header className="hidden md:flex items-center justify-between px-8 py-5 bg-white border-b border-[#E2E8F0] shrink-0 select-none">
-          <div className="space-y-0.5">
-            <h2 className="text-lg font-extrabold text-[#1E2330]">Hello, {user?.name || 'Margaret'}</h2>
-            <p className="text-[10px] text-[#6E7385] font-semibold">Track team progress here. You almost reach a goal!</p>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-[10px] font-bold text-[#6E7385]">
-            <span className="material-symbols-outlined text-xs">calendar_today</span>
-            <span>{new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-          </div>
-        </header>
-
-        {/* SaaS Dashboard Summary Cards Row - Visible on desktop */}
-        <section className="hidden md:grid grid-cols-3 gap-6 px-8 pt-6 pb-2 shrink-0 select-none">
-          {/* Card 1: Finished Tasks */}
-          <div className="bg-white p-4.5 rounded-2xl border border-[#E2E8F0] shadow-sm flex items-center justify-between transition-all hover:shadow-md">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <span className="material-symbols-outlined text-base font-bold">handshake</span>
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-[9px] text-[#6E7385] font-bold uppercase tracking-wider">Finished</p>
-                <p className="text-lg font-black text-[#1E2330]">18</p>
-              </div>
-            </div>
-            <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+8 tasks</span>
-          </div>
-
-          {/* Card 2: Tracked Time */}
-          <div className="bg-white p-4.5 rounded-2xl border border-[#E2E8F0] shadow-sm flex items-center justify-between transition-all hover:shadow-md">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-                <span className="material-symbols-outlined text-base font-bold">timer</span>
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-[9px] text-[#6E7385] font-bold uppercase tracking-wider">Tracked</p>
-                <p className="text-lg font-black text-[#1E2330]">31h</p>
-              </div>
-            </div>
-            <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">-6 hours</span>
-          </div>
-
-          {/* Card 3: Efficiency */}
-          <div className="bg-white p-4.5 rounded-2xl border border-[#E2E8F0] shadow-sm flex items-center justify-between transition-all hover:shadow-md">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
-                <span className="material-symbols-outlined text-base font-bold">query_stats</span>
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-[9px] text-[#6E7385] font-bold uppercase tracking-wider">Efficiency</p>
-                <p className="text-lg font-black text-[#1E2330]">93%</p>
-              </div>
-            </div>
-            <span className="text-[9px] font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">+12%</span>
-          </div>
-        </section>
 
         {/* Dashboard Canvas Content */}
         {activeTab === 'inventory' ? (
@@ -1369,132 +1303,6 @@ function Dashboard() {
           <ProductsPage />
         )}
       </div>
-
-      {/* Sidebar Kanan & Aktivitas (Sisi Kanan - Desktop xl:flex) */}
-      <aside className="hidden xl:flex w-[320px] bg-white border-l border-[#E2E8F0] flex-col shrink-0 h-full p-6 space-y-6 overflow-y-auto select-none">
-        {/* Profile Card */}
-        <div className="bg-[#F8FAFC] p-5 rounded-3xl border border-[#E2E8F0] shadow-sm flex flex-col items-center text-center space-y-3 relative overflow-hidden">
-          <div className="relative">
-            <div className="w-18 h-18 rounded-full border-2 border-[#5B50E5]/20 p-0.5 overflow-hidden bg-white">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150"
-                alt={user?.name || 'Megan Norton'}
-                className="w-full h-full object-cover rounded-full"
-              />
-            </div>
-            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
-          </div>
-          <div className="space-y-0.5">
-            <h3 className="font-extrabold text-sm text-[#1E2330]">{user?.name || 'Megan Norton'}</h3>
-            <p className="text-[10px] text-[#6E7385] font-semibold">@{user?.username || 'megnorton'} • {user?.role || 'KASIR'}</p>
-          </div>
-          <div className="flex items-center gap-2 pt-1.5 w-full">
-            <button className="flex-1 py-2 rounded-xl bg-white border border-[#E2E8F0] text-[#6E7385] hover:bg-[#EEF0FA] text-[10px] font-extrabold transition-all-default flex items-center justify-center gap-1 active:scale-95">
-              <span className="material-symbols-outlined text-xs">call</span>
-              <span>Call</span>
-            </button>
-            <button className="flex-1 py-2 rounded-xl bg-[#5B50E5] text-white hover:bg-[#4A3FC8] text-[10px] font-extrabold transition-all-default flex items-center justify-center gap-1 active:scale-95 shadow-sm">
-              <span className="material-symbols-outlined text-xs">video_call</span>
-              <span>Video</span>
-            </button>
-            <button className="p-2 rounded-xl bg-white border border-[#E2E8F0] text-[#6E7385] hover:bg-[#EEF0FA] transition-all-default active:scale-95">
-              <span className="material-symbols-outlined text-xs leading-none">more_horiz</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Activity Feed */}
-        <div className="flex-1 flex flex-col min-h-0 space-y-3">
-          <div className="flex justify-between items-center px-1">
-            <h4 className="font-black text-xs text-[#1E2330] tracking-wider uppercase">Activity</h4>
-            <span className="text-[10px] font-bold text-[#5B50E5] hover:underline cursor-pointer">View all</span>
-          </div>
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-            {/* Activity 1 */}
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[10px] font-bold text-[#5B50E5] shrink-0">
-                FM
-              </div>
-              <div className="space-y-1 text-left">
-                <p className="text-[10px] text-[#1E2330] font-bold leading-snug">
-                  Floyd Miles <span className="font-medium text-[#6E7385]">Commented on Stark Project</span>
-                </p>
-                <div className="bg-[#F8FAFC] p-2.5 rounded-2xl border border-[#E2E8F0] text-[9px] text-[#6E7385] leading-relaxed">
-                  Stok makanan basah Royal Canin perlu segera di-restock untuk shift malam.
-                </div>
-                <div className="flex items-center gap-3 text-[9px] text-[#6E7385] font-bold pt-0.5">
-                  <span>3m ago</span>
-                  <button className="hover:text-[#5B50E5] flex items-center gap-0.5">
-                    <span className="material-symbols-outlined text-[10px]">reply</span>
-                    <span>Reply</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Activity 2 */}
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center text-[10px] font-bold text-teal-600 shrink-0">
-                GH
-              </div>
-              <div className="space-y-1 text-left w-full">
-                <p className="text-[10px] text-[#1E2330] font-bold leading-snug">
-                  Guy Hawkins <span className="font-medium text-[#6E7385]">Added a file to Heros Project</span>
-                </p>
-                {/* Figma attachment component */}
-                <div className="bg-white p-2.5 rounded-2xl border border-[#E2E8F0] flex items-center justify-between shadow-sm hover:border-[#5B50E5]/30 cursor-pointer transition-colors w-full">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-[#5B50E5]/10 flex items-center justify-center text-[#5B50E5] shrink-0">
-                      <span className="material-symbols-outlined text-sm font-bold">description</span>
-                    </div>
-                    <div className="min-w-0 leading-tight">
-                      <p className="font-bold text-[9px] text-[#1E2330] truncate">Homepage.fig</p>
-                      <p className="text-[8px] text-[#6E7385]">13.4 Mb</p>
-                    </div>
-                  </div>
-                  <span className="material-symbols-outlined text-[#6E7385] text-sm hover:text-[#5B50E5]">download</span>
-                </div>
-                <p className="text-[9px] text-[#6E7385] font-bold pt-0.5">10m ago</p>
-              </div>
-            </div>
-
-            {/* Activity 3 */}
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-[10px] font-bold text-rose-600 shrink-0">
-                KW
-              </div>
-              <div className="space-y-1 text-left">
-                <p className="text-[10px] text-[#1E2330] font-bold leading-snug">
-                  Kristin Watson <span className="font-medium text-[#6E7385]">Commented on Heros Project</span>
-                </p>
-                <p className="text-[9px] text-[#6E7385] font-bold pt-0.5">1h ago</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Message Input Bar */}
-        <div className="pt-3 border-t border-[#E2E8F0] flex items-center gap-2">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              placeholder="Write a message..."
-              className="w-full pl-3 pr-20 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-[10px] font-bold text-[#1E2330] focus:outline-none focus:border-[#5B50E5]"
-            />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-[#6E7385]">
-              <button className="hover:text-[#5B50E5] flex items-center">
-                <span className="material-symbols-outlined text-sm font-bold">attach_file</span>
-              </button>
-              <button className="hover:text-[#5B50E5] flex items-center">
-                <span className="material-symbols-outlined text-sm font-bold">sentiment_satisfied</span>
-              </button>
-            </div>
-          </div>
-          <button className="p-2.5 bg-[#5B50E5] hover:bg-[#4A3FC8] text-white rounded-xl flex items-center justify-center shadow-sm active:scale-95 transition-all-default">
-            <span className="material-symbols-outlined text-sm font-bold">mic</span>
-          </button>
-        </div>
-      </aside>
 
       {/* Virtual Receipt Modal */}
       {lastTransaction && (
