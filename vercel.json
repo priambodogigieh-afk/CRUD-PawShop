@@ -20,7 +20,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/frontend/package.json"
+      "destination": "/frontend/$1"
     }
   ]
 }
