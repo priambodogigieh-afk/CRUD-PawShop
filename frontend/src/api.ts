@@ -12,11 +12,19 @@ function authHeaders(contentType = true): Record<string, string> {
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
-    throw new Error(err.error || `Request failed with status ${res.status}`)
+  const text = await res.text()
+  let data: any
+  try {
+    data = text ? JSON.parse(text) : {}
+  } catch (e) {
+    data = { error: text || `HTTP error ${res.status}` }
   }
-  return res.json()
+
+  if (!res.ok) {
+    const errorMsg = data.error || data.message || `Request failed with status ${res.status}`
+    throw new Error(errorMsg)
+  }
+  return data as T
 }
 
 // ==========================================

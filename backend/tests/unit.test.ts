@@ -116,6 +116,36 @@ describe('Pengujian Unit - Logika Bisnis & Validasi Request', () => {
     })
   })
 
+  describe('Validasi Nomor Telepon Member (Format regex: ^\\+?[0-9]{9,15}$)', () => {
+    const phoneRegex = /^\+?[0-9]{9,15}$/
+
+    it('harus menerima nomor telepon lokal tanpa kode negara (9-15 digit)', () => {
+      expect(phoneRegex.test('08123456789')).toBe(true)
+      expect(phoneRegex.test('081234567890')).toBe(true)
+    })
+
+    it('harus menerima nomor dengan kode negara tanda plus (+)', () => {
+      expect(phoneRegex.test('+628123456789')).toBe(true)
+      expect(phoneRegex.test('+62812345678901')).toBe(true)
+    })
+
+    it('harus menolak nomor yang terlalu pendek (<9 digit)', () => {
+      expect(phoneRegex.test('0812345')).toBe(false)
+      expect(phoneRegex.test('+62812')).toBe(false)
+    })
+
+    it('harus menolak nomor yang terlalu panjang (>15 digit)', () => {
+      expect(phoneRegex.test('08123456789012345')).toBe(false)
+      expect(phoneRegex.test('+628123456789012345')).toBe(false)
+    })
+
+    it('harus menolak nomor yang memiliki karakter spasi, huruf, atau simbol non-plus', () => {
+      expect(phoneRegex.test('0812-3456-7890')).toBe(false)
+      expect(phoneRegex.test('0812 3456 7890')).toBe(false)
+      expect(phoneRegex.test('0812abc3456')).toBe(false)
+    })
+  })
+
   describe('Utilitas Hashing Password', () => {
     it('harus melakukan hash dan verifikasi password dengan benar menggunakan custom password utility', async () => {
       const password = 'mySecretPassword'

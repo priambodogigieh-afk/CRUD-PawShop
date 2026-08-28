@@ -63,8 +63,22 @@ export default function MembersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formName.trim() || !formPhone.trim()) {
+    const name = formName.trim()
+    const phone = formPhone.trim()
+
+    if (!name || !phone) {
       setFormError('Semua field wajib diisi')
+      return
+    }
+
+    if (name.length < 2) {
+      setFormError('Nama lengkap harus memiliki minimal 2 karakter')
+      return
+    }
+
+    const phoneRegex = /^\+?[0-9]{9,15}$/
+    if (!phoneRegex.test(phone)) {
+      setFormError('Nomor telepon harus berupa angka 9-15 digit (contoh: 081234567890 atau +6281234567890)')
       return
     }
 
@@ -73,7 +87,7 @@ export default function MembersPage() {
     try {
       if (editingMember) {
         // Update
-        const res = await updateMember(editingMember.id, { name: formName, phone: formPhone })
+        const res = await updateMember(editingMember.id, { name, phone })
         if (res.success) {
           showToast('Data member berhasil diperbarui!', 'success')
           setIsModalOpen(false)
@@ -81,7 +95,7 @@ export default function MembersPage() {
         }
       } else {
         // Create
-        const res = await createMember({ name: formName, phone: formPhone })
+        const res = await createMember({ name, phone })
         if (res.success) {
           showToast('Member baru berhasil didaftarkan!', 'success')
           setIsModalOpen(false)

@@ -1,10 +1,11 @@
 import { Elysia, t } from 'elysia'
 import { PrismaClient } from '@prisma/client'
+import { adminGuard } from '../utils/auth'
 
 export function transactionsRoutes(prisma: PrismaClient) {
   return new Elysia({ prefix: '/api/transactions' })
 
-    // GET reports summary (daily, weekly, monthly)
+    // GET reports summary (daily, weekly, monthly) (ADMIN only)
     .get('/reports', async ({ query, set }) => {
       try {
         const type = query.type || 'daily'
@@ -155,6 +156,7 @@ export function transactionsRoutes(prisma: PrismaClient) {
         return { error: 'Gagal menghasilkan data laporan' }
       }
     }, {
+      beforeHandle: adminGuard,
       query: t.Object({
         type: t.Optional(t.String())
       })
@@ -181,6 +183,11 @@ export function transactionsRoutes(prisma: PrismaClient) {
         if (!user) {
           set.status = 401
           return { error: 'Unauthorized: User authentication required' }
+        }
+
+        if (!body.items || body.items.length === 0) {
+          set.status = 400
+          return { error: 'Keranjang belanja tidak boleh kosong' }
         }
 
         const invoiceNumber = `INV-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`

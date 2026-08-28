@@ -43,15 +43,20 @@ function CategorySection({ isAdmin }: { isAdmin: boolean }) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!formName.trim()) return show('Nama kategori tidak boleh kosong', 'error')
+    const name = formName.trim()
+    const desc = formDesc.trim() || undefined
+
+    if (!name) return show('Nama kategori tidak boleh kosong', 'error')
+    if (name.length < 2) return show('Nama kategori harus memiliki minimal 2 karakter', 'error')
+
     setSubmitting(true)
     try {
       if (editingId !== null) {
-        const res = await updateCategory(editingId, { name: formName.trim(), description: formDesc.trim() || undefined })
+        const res = await updateCategory(editingId, { name, description: desc })
         setCategories(prev => prev.map(c => c.id === editingId ? { ...res.category, _count: c._count } : c))
         show('Kategori berhasil diperbarui')
       } else {
-        const res = await createCategory({ name: formName.trim(), description: formDesc.trim() || undefined })
+        const res = await createCategory({ name, description: desc })
         setCategories(prev => [...prev, { ...res.category, _count: { products: 0 } }])
         show('Kategori berhasil ditambahkan')
       }
@@ -205,15 +210,19 @@ function BrandSection({ isAdmin }: { isAdmin: boolean }) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!formName.trim()) return show('Nama merek tidak boleh kosong', 'error')
+    const name = formName.trim()
+
+    if (!name) return show('Nama merek tidak boleh kosong', 'error')
+    if (name.length < 2) return show('Nama merek harus memiliki minimal 2 karakter', 'error')
+
     setSubmitting(true)
     try {
       if (editingId !== null) {
-        const res = await updateBrand(editingId, { name: formName.trim() })
+        const res = await updateBrand(editingId, { name })
         setBrands(prev => prev.map(b => b.id === editingId ? { ...res.brand, _count: b._count } : b))
         show('Merek berhasil diperbarui')
       } else {
-        const res = await createBrand({ name: formName.trim() })
+        const res = await createBrand({ name })
         setBrands(prev => [...prev, { ...res.brand, _count: { products: 0 } }])
         show('Merek berhasil ditambahkan')
       }

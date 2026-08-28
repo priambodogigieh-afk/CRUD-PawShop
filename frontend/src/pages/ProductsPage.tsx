@@ -67,20 +67,38 @@ function ProductFormModal({ editing, categories, brands, onClose, onSaved }: Pro
     e.preventDefault()
     setError('')
 
-    const cost = 0
+    const trimmedSku = sku.trim().toUpperCase()
+    const trimmedName = name.trim()
     const sell = parseFloat(sellingPrice)
     const stk = parseInt(stock)
 
-    if (!sku.trim() || !name.trim() || !categoryId) return setError('SKU, nama, dan kategori wajib diisi')
-    if (isNaN(sell) || sell < 0) return setError('Harga jual tidak valid')
-    if (isNaN(stk) || stk < 0) return setError('Stok tidak valid')
+    if (!trimmedSku || !trimmedName || !categoryId) {
+      setError('SKU, nama produk, dan kategori wajib diisi')
+      return
+    }
+
+    const skuRegex = /^[A-Z0-9-]+$/
+    if (!skuRegex.test(trimmedSku)) {
+      setError('SKU hanya boleh berisi huruf besar, angka, dan tanda hubung (-)')
+      return
+    }
+
+    if (isNaN(sell) || sell < 0) {
+      setError('Harga jual harus berupa angka positif')
+      return
+    }
+
+    if (isNaN(stk) || stk < 0) {
+      setError('Stok harus berupa angka bulat positif')
+      return
+    }
 
     const payload: ProductInput = {
-      sku: sku.trim(),
-      name: name.trim(),
+      sku: trimmedSku,
+      name: trimmedName,
       categoryId: parseInt(categoryId),
       brandId: brandId ? parseInt(brandId) : null,
-      costPrice: cost,
+      costPrice: 0,
       sellingPrice: sell,
       stock: stk,
       expiredDate: expiredDate || null,

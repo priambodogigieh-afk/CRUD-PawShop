@@ -1,5 +1,6 @@
 import { Elysia, t } from 'elysia'
 import { PrismaClient } from '@prisma/client'
+import { adminGuard } from '../utils/auth'
 
 export function membersRoutes(prisma: PrismaClient) {
   return new Elysia({ prefix: '/api/members' })
@@ -31,6 +32,14 @@ export function membersRoutes(prisma: PrismaClient) {
 
     // POST create a new member
     .post('', async ({ body, set }) => {
+      const trimmedName = body.name.trim()
+      const trimmedPhone = body.phone.trim()
+
+      if (!trimmedName || !trimmedPhone) {
+        set.status = 400
+        return { error: 'Nama dan nomor telepon wajib diisi' }
+      }
+
       try {
         // Generate a unique member code MEM-XXXXXX
         let memberCode = ''
@@ -51,7 +60,7 @@ export function membersRoutes(prisma: PrismaClient) {
 
         // Check if phone already registered
         const existingPhone = await prisma.member.findUnique({
-          where: { phone: body.phone }
+          where: { phone: trimmedPhone }
         })
 
         if (existingPhone) {
@@ -62,8 +71,8 @@ export function membersRoutes(prisma: PrismaClient) {
         const member = await prisma.member.create({
           data: {
             memberCode,
-            name: body.name,
-            phone: body.phone,
+            name: trimmedName,
+            phone: trimmedPhone,
             points: 0
           }
         })
@@ -77,23 +86,31 @@ export function membersRoutes(prisma: PrismaClient) {
     }, {
       body: t.Object({
         name: t.String({ minLength: 2 }),
-        phone: t.String({ minLength: 5 })
+        phone: t.String({ pattern: '^\\+?[0-9]{9,15}$' })
       })
     })
 
     // PUT update member details
     .put('/:id', async ({ params, body, set }) => {
-      try {
-        const id = parseInt(params.id)
-        if (isNaN(id)) {
-          set.status = 400
-          return { error: 'ID member tidak valid' }
-        }
+      const id = parseInt(params.id)
+      if (isNaN(id)) {
+        set.status = 400
+        return { error: 'ID member tidak valid' }
+      }
 
+      const trimmedName = body.name.trim()
+      const trimmedPhone = body.phone.trim()
+
+      if (!trimmedName || !trimmedPhone) {
+        set.status = 400
+        return { error: 'Nama dan nomor telepon wajib diisi' }
+      }
+
+      try {
         // Check if phone belongs to another member
         const existingPhone = await prisma.member.findFirst({
           where: {
-            phone: body.phone,
+            phone: trimmedPhone,
             id: { not: id }
           }
         })
@@ -106,8 +123,8 @@ export function membersRoutes(prisma: PrismaClient) {
         const member = await prisma.member.update({
           where: { id },
           data: {
-            name: body.name,
-            phone: body.phone
+            name: trimmedName,
+            phone: trimmedPhone
           }
         })
 
@@ -120,11 +137,11 @@ export function membersRoutes(prisma: PrismaClient) {
     }, {
       body: t.Object({
         name: t.String({ minLength: 2 }),
-        phone: t.String({ minLength: 5 })
+        phone: t.String({ pattern: '^\\+?[0-9]{9,15}$' })
       })
     })
 
-    // DELETE a member
+    // DELETE a member (ADMIN only)
     .delete('/:id', async ({ params, set }) => {
       try {
         const id = parseInt(params.id)
@@ -143,5 +160,7 @@ export function membersRoutes(prisma: PrismaClient) {
         set.status = 400
         return { error: error.message || 'Gagal menghapus member' }
       }
+    }, {
+      beforeHandle: adminGuard
     })
 }

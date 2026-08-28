@@ -1,5 +1,6 @@
 import { Elysia, t } from 'elysia'
 import { PrismaClient } from '@prisma/client'
+import { adminGuard } from '../utils/auth'
 
 export function categoriesRoutes(prisma: PrismaClient) {
   return new Elysia({ prefix: '/api/categories' })
@@ -20,16 +21,22 @@ export function categoriesRoutes(prisma: PrismaClient) {
       }
     })
 
-    // POST create category (ADMIN only — checked in index)
+    // POST create category (ADMIN only)
     .post('', async ({ body, set }) => {
       try {
-        const existing = await prisma.category.findUnique({ where: { name: body.name } })
+        const trimmedName = body.name.trim()
+        if (!trimmedName) {
+          set.status = 400
+          return { error: 'Nama kategori tidak boleh kosong' }
+        }
+
+        const existing = await prisma.category.findUnique({ where: { name: trimmedName } })
         if (existing) {
           set.status = 400
           return { error: 'Nama kategori sudah digunakan' }
         }
         const category = await prisma.category.create({
-          data: { name: body.name, description: body.description ?? null }
+          data: { name: trimmedName, description: body.description?.trim() ?? null }
         })
         return { success: true, category }
       } catch (error) {
@@ -38,20 +45,31 @@ export function categoriesRoutes(prisma: PrismaClient) {
         return { error: 'Gagal menambahkan kategori' }
       }
     }, {
+      beforeHandle: adminGuard,
       body: t.Object({
         name: t.String({ minLength: 1 }),
         description: t.Optional(t.String())
       })
     })
 
-    // PUT update category
+    // PUT update category (ADMIN only)
     .put('/:id', async ({ params, body, set }) => {
       const id = parseInt(params.id)
+      if (isNaN(id)) {
+        set.status = 400
+        return { error: 'ID kategori tidak valid' }
+      }
       try {
+        const trimmedName = body.name?.trim()
+        if (trimmedName === '') {
+          set.status = 400
+          return { error: 'Nama kategori tidak boleh kosong' }
+        }
+
         // Check name uniqueness (excluding self)
-        if (body.name) {
+        if (trimmedName) {
           const existing = await prisma.category.findFirst({
-            where: { name: body.name, NOT: { id } }
+            where: { name: trimmedName, NOT: { id } }
           })
           if (existing) {
             set.status = 400
@@ -61,8 +79,8 @@ export function categoriesRoutes(prisma: PrismaClient) {
         const category = await prisma.category.update({
           where: { id },
           data: {
-            name: body.name,
-            description: body.description ?? undefined
+            name: trimmedName,
+            description: body.description?.trim() ?? undefined
           }
         })
         return { success: true, category }
@@ -75,6 +93,7 @@ export function categoriesRoutes(prisma: PrismaClient) {
         return { error: 'Gagal memperbarui kategori' }
       }
     }, {
+      beforeHandle: adminGuard,
       params: t.Object({ id: t.String() }),
       body: t.Object({
         name: t.Optional(t.String({ minLength: 1 })),
@@ -82,9 +101,13 @@ export function categoriesRoutes(prisma: PrismaClient) {
       })
     })
 
-    // DELETE category (reject if has products)
+    // DELETE category (ADMIN only, reject if has products)
     .delete('/:id', async ({ params, set }) => {
       const id = parseInt(params.id)
+      if (isNaN(id)) {
+        set.status = 400
+        return { error: 'ID kategori tidak valid' }
+      }
       try {
         const count = await prisma.product.count({ where: { categoryId: id } })
         if (count > 0) {
@@ -102,6 +125,7 @@ export function categoriesRoutes(prisma: PrismaClient) {
         return { error: 'Gagal menghapus kategori' }
       }
     }, {
+      beforeHandle: adminGuard,
       params: t.Object({ id: t.String() })
     })
 }

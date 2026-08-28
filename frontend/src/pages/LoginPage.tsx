@@ -16,9 +16,20 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
+
+    const trimmedUsername = username.trim()
+    if (trimmedUsername.length < 3) {
+      setError('Username harus memiliki minimal 3 karakter.')
+      return
+    }
+    if (password.length < 4) {
+      setError('Password harus memiliki minimal 4 karakter.')
+      return
+    }
+
     setLoading(true)
     try {
-      const result = await loginUser(username, password)
+      const result = await loginUser(trimmedUsername, password)
       login(result.token, result.user)
       navigate('/', { replace: true })
     } catch (err: any) {

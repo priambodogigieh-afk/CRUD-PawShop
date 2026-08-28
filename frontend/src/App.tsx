@@ -446,6 +446,14 @@ function Dashboard() {
       return
     }
 
+    if (memberPhone.trim() !== '') {
+      const found = members.find(m => m.phone === memberPhone.trim())
+      if (!found) {
+        showToast('Member tidak ditemukan! Harap periksa nomor HP atau kosongkan.', 'error')
+        return
+      }
+    }
+
     const matchedMember = memberPhone.trim() !== '' ? members.find(m => m.phone === memberPhone.trim()) : null
     const txPayload = {
       paymentMethod: 'CASH',

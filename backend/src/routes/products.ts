@@ -1,5 +1,6 @@
 import { Elysia, t } from 'elysia'
 import { PrismaClient } from '@prisma/client'
+import { adminGuard } from '../utils/auth'
 
 export function productsRoutes(prisma: PrismaClient) {
   return new Elysia({ prefix: '/api/products' })
@@ -50,11 +51,28 @@ export function productsRoutes(prisma: PrismaClient) {
       })
     })
 
-    // POST create product
+    // POST create product (ADMIN only)
     .post('', async ({ body, set }) => {
       try {
+        const sku = body.sku.trim().toUpperCase()
+        if (!/^[A-Z0-9-]+$/.test(sku)) {
+          set.status = 400
+          return { error: 'SKU hanya boleh berisi huruf besar, angka, dan tanda hubung (-)' }
+        }
+
+        const name = body.name.trim()
+        if (!name) {
+          set.status = 400
+          return { error: 'Nama produk tidak boleh kosong' }
+        }
+
+        if (body.costPrice !== undefined && body.sellingPrice !== undefined && body.sellingPrice < body.costPrice) {
+          set.status = 400
+          return { error: 'Harga jual tidak boleh lebih kecil dari harga modal' }
+        }
+
         // Check SKU uniqueness
-        const existingSku = await prisma.product.findUnique({ where: { sku: body.sku } })
+        const existingSku = await prisma.product.findUnique({ where: { sku } })
         if (existingSku) {
           set.status = 400
           return { error: 'SKU sudah digunakan oleh produk lain' }
@@ -62,8 +80,8 @@ export function productsRoutes(prisma: PrismaClient) {
 
         const product = await prisma.product.create({
           data: {
-            sku: body.sku,
-            name: body.name,
+            sku,
+            name,
             categoryId: body.categoryId,
             brandId: body.brandId ?? null,
             costPrice: body.costPrice,
@@ -84,6 +102,7 @@ export function productsRoutes(prisma: PrismaClient) {
         return { error: 'Gagal menambahkan produk baru' }
       }
     }, {
+      beforeHandle: adminGuard,
       body: t.Object({
         sku: t.String({ minLength: 1 }),
         name: t.String({ minLength: 1 }),
@@ -97,14 +116,24 @@ export function productsRoutes(prisma: PrismaClient) {
       })
     })
 
-    // PUT update product
+    // PUT update product (ADMIN only)
     .put('/:id', async ({ params, body, set }) => {
       const id = parseInt(params.id)
+      if (isNaN(id)) {
+        set.status = 400
+        return { error: 'ID produk tidak valid' }
+      }
       try {
-        // Check SKU uniqueness (excluding self)
-        if (body.sku) {
+        let sku = body.sku?.trim().toUpperCase()
+        if (sku !== undefined) {
+          if (!/^[A-Z0-9-]+$/.test(sku)) {
+            set.status = 400
+            return { error: 'SKU hanya boleh berisi huruf besar, angka, dan tanda hubung (-)' }
+          }
+
+          // Check SKU uniqueness (excluding self)
           const existing = await prisma.product.findFirst({
-            where: { sku: body.sku, NOT: { id } }
+            where: { sku, NOT: { id } }
           })
           if (existing) {
             set.status = 400
@@ -112,11 +141,34 @@ export function productsRoutes(prisma: PrismaClient) {
           }
         }
 
+        const name = body.name?.trim()
+        if (name === '') {
+          set.status = 400
+          return { error: 'Nama produk tidak boleh kosong' }
+        }
+
+        // Check if sellingPrice is less than costPrice
+        // Since body parameters are optional in update, we first retrieve the existing product if needed
+        let finalCostPrice = body.costPrice
+        let finalSellingPrice = body.sellingPrice
+        if (finalCostPrice === undefined || finalSellingPrice === undefined) {
+          const currentProduct = await prisma.product.findUnique({ where: { id } })
+          if (currentProduct) {
+            if (finalCostPrice === undefined) finalCostPrice = currentProduct.costPrice
+            if (finalSellingPrice === undefined) finalSellingPrice = currentProduct.sellingPrice
+          }
+        }
+
+        if (finalCostPrice !== undefined && finalSellingPrice !== undefined && finalSellingPrice < finalCostPrice) {
+          set.status = 400
+          return { error: 'Harga jual tidak boleh lebih kecil dari harga modal' }
+        }
+
         const product = await prisma.product.update({
           where: { id },
           data: {
-            sku: body.sku,
-            name: body.name,
+            sku,
+            name,
             categoryId: body.categoryId,
             brandId: body.brandId ?? undefined,
             costPrice: body.costPrice,
@@ -142,6 +194,7 @@ export function productsRoutes(prisma: PrismaClient) {
         return { error: 'Gagal memperbarui produk' }
       }
     }, {
+      beforeHandle: adminGuard,
       params: t.Object({ id: t.String() }),
       body: t.Object({
         sku: t.Optional(t.String({ minLength: 1 })),
@@ -156,9 +209,13 @@ export function productsRoutes(prisma: PrismaClient) {
       })
     })
 
-    // DELETE product
+    // DELETE product (ADMIN only)
     .delete('/:id', async ({ params, set }) => {
       const id = parseInt(params.id)
+      if (isNaN(id)) {
+        set.status = 400
+        return { error: 'ID produk tidak valid' }
+      }
       try {
         await prisma.product.delete({ where: { id } })
         return { success: true, message: 'Produk berhasil dihapus' }
@@ -171,12 +228,17 @@ export function productsRoutes(prisma: PrismaClient) {
         return { error: 'Gagal menghapus produk' }
       }
     }, {
+      beforeHandle: adminGuard,
       params: t.Object({ id: t.String() })
     })
 
-    // PATCH stock only (for POS checkout)
+    // PATCH stock only (ADMIN only - for inventory adjustments, POS checkout uses direct Prisma transaction)
     .patch('/:id/stock', async ({ params, body, set }) => {
       const id = parseInt(params.id)
+      if (isNaN(id)) {
+        set.status = 400
+        return { error: 'ID produk tidak valid' }
+      }
       try {
         const product = await prisma.product.update({
           where: { id },
@@ -192,6 +254,7 @@ export function productsRoutes(prisma: PrismaClient) {
         return { error: 'Gagal memperbarui stok' }
       }
     }, {
+      beforeHandle: adminGuard,
       params: t.Object({ id: t.String() }),
       body: t.Object({ stock: t.Integer({ minimum: 0 }) })
     })
