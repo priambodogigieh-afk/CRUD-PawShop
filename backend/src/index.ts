@@ -37,26 +37,26 @@ const app = new Elysia()
 
   // Global Error Handler
   .onError(({ code, error, set }) => {
-    console.error(`[API Error] Code: ${code}`, error)
+    const err = error as any
+    console.error(`[API Error] Code: ${code}`, err)
 
     if (code === 'VALIDATION') {
       set.status = 400
-      const valError = error as any
       let message = 'Validasi gagal'
-      if (valError.all && valError.all.length > 0) {
-        const details = valError.all.map((err: any) => {
-          const field = err.path.replace('/', '') || 'input'
-          let reason = err.message
-          if (err.summary) reason = err.summary
+      if (err.all && err.all.length > 0) {
+        const details = err.all.map((e: any) => {
+          const field = e.path.replace('/', '') || 'input'
+          let reason = e.message
+          if (e.summary) reason = e.summary
           
           if (reason.includes('Expected string')) {
             reason = 'harus berupa teks'
           } else if (reason.includes('Expected number') || reason.includes('Expected integer')) {
             reason = 'harus berupa angka'
           } else if (reason.includes('minimum')) {
-            reason = `tidak boleh kurang dari ${err.schema.minimum}`
+            reason = `tidak boleh kurang dari ${e.schema.minimum}`
           } else if (reason.includes('minLength')) {
-            reason = `harus memiliki panjang minimal ${err.schema.minLength} karakter`
+            reason = `harus memiliki panjang minimal ${e.schema.minLength} karakter`
           } else if (reason.includes('Expected pattern')) {
             reason = 'format tidak valid'
           }
@@ -64,9 +64,9 @@ const app = new Elysia()
         }).join(', ')
         message = `Validasi gagal: ${details}`
       } else {
-        message = `Validasi gagal: ${error.message}`
+        message = `Validasi gagal: ${err.message}`
       }
-      return { error: message, details: valError.all }
+      return { error: message, details: err.all }
     }
 
     if (code === 'NOT_FOUND') {
@@ -75,30 +75,29 @@ const app = new Elysia()
     }
 
     // Prisma Client errors
-    if (error.name === 'PrismaClientKnownRequestError') {
-      const prismaErr = error as any
-      if (prismaErr.code === 'P2002') {
+    if (err.name === 'PrismaClientKnownRequestError') {
+      if (err.code === 'P2002') {
         set.status = 400
-        const target = (prismaErr.meta?.target as string[]) || []
+        const target = (err.meta?.target as string[]) || []
         const fieldName = target.join(', ')
         return { 
           error: `Gagal menyimpan: Data dengan ${fieldName || 'nilai tersebut'} sudah terdaftar (konflik unik).` 
         }
       }
-      if (prismaErr.code === 'P2003') {
+      if (err.code === 'P2003') {
         set.status = 400
         return { error: 'Gagal memproses data karena relasi antar data (foreign key) tidak valid.' }
       }
-      if (prismaErr.code === 'P2025') {
+      if (err.code === 'P2025') {
         set.status = 404
         return { error: 'Data tidak ditemukan di database.' }
       }
     }
 
-    set.status = (error as any).status || 500
+    set.status = err.status || 500
     return { 
-      error: error.message || 'Terjadi kesalahan internal pada server',
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: err.message || 'Terjadi kesalahan internal pada server',
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
     }
   })
 
