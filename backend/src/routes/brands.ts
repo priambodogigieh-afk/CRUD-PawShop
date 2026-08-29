@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia'
 import { PrismaClient } from '@prisma/client'
-import { adminGuard } from '../utils/auth'
+import { adminGuard } from '../utils/auth.js'
 
 export function brandsRoutes(prisma: PrismaClient) {
   return new Elysia({ prefix: '/api/brands' })

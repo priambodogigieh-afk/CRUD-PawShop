@@ -6,12 +6,12 @@ import { bearer } from '@elysiajs/bearer'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
-import { categoriesRoutes } from './routes/categories'
-import { brandsRoutes } from './routes/brands'
-import { productsRoutes } from './routes/products'
-import { transactionsRoutes } from './routes/transactions'
-import { membersRoutes } from './routes/members'
-import { hashPassword, verifyPassword } from './utils/password'
+import { categoriesRoutes } from './routes/categories.js'
+import { brandsRoutes } from './routes/brands.js'
+import { productsRoutes } from './routes/products.js'
+import { transactionsRoutes } from './routes/transactions.js'
+import { membersRoutes } from './routes/members.js'
+import { hashPassword, verifyPassword } from './utils/password.js'
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
