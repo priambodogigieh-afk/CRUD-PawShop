@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, type FormEvent } from 'react'
 import { fetchProducts, createProduct, updateProduct, deleteProduct, fetchCategories, fetchBrands } from '../api'
 import type { Product, Category, Brand, ProductInput } from '../types'
 import { useAuth } from '../context/AuthContext'
+import { SkeletonRow } from '../components/Skeleton'
+import { EmptyState } from '../components/EmptyState'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatCurrency(n: number) {
@@ -472,15 +474,41 @@ export default function ProductsPage() {
       {/* Table */}
       <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-6 space-y-3">
-            {[1,2,3,4,5].map(i => <div key={i} className="h-12 bg-[#EEF0FA] rounded-xl animate-pulse" />)}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm whitespace-nowrap">
+              <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                <tr>
+                  <th className="text-left px-5 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">SKU</th>
+                  <th className="text-left px-5 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Nama Produk</th>
+                  <th className="text-left px-5 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Kategori</th>
+                  <th className="text-left px-5 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Merek</th>
+                  <th className="text-right px-5 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Harga Jual</th>
+                  <th className="text-center px-5 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Stok</th>
+                  <th className="text-center px-5 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Kadaluarsa</th>
+                  {isAdmin && <th className="text-right px-5 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Aksi</th>}
+                </tr>
+              </thead>
+              <tbody>
+                <SkeletonRow cols={isAdmin ? 8 : 7} rows={5} />
+              </tbody>
+            </table>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-20 text-center text-[#6E7385]/50">
-            <span className="material-symbols-outlined text-5xl mb-2 block text-[#5B50E5]/30">inventory_2</span>
-            <p className="font-semibold text-sm">Tidak ada produk ditemukan</p>
-            <p className="text-xs mt-1">Coba ubah filter atau tambahkan produk baru</p>
-          </div>
+          <EmptyState
+            icon="inventory_2"
+            title="Tidak ada produk ditemukan"
+            description="Coba ubah filter pencarian atau tambahkan produk baru."
+            action={
+              isAdmin ? (
+                <button
+                  onClick={handleOpenAdd}
+                  className="bg-[#5B50E5] hover:bg-[#4A3FC8] text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-md shadow-[#5B50E5]/20 hover:shadow-[#5B50E5]/30 cursor-pointer"
+                >
+                  Tambah Produk Baru
+                </button>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm whitespace-nowrap">

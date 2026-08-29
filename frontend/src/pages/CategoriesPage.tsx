@@ -5,6 +5,8 @@ import {
 } from '../api'
 import type { Category, Brand } from '../types'
 import { useAuth } from '../context/AuthContext'
+import { SkeletonRow } from '../components/Skeleton'
+import { EmptyState } from '../components/EmptyState'
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function useToast() {
@@ -134,12 +136,27 @@ function CategorySection({ isAdmin }: { isAdmin: boolean }) {
           </button>
         </div>
         {loading ? (
-          <div className="p-6 space-y-3">{[1,2,3].map(i => <div key={i} className="h-10 bg-[#EEF0FA] rounded-lg animate-pulse" />)}</div>
-        ) : categories.length === 0 ? (
-          <div className="py-16 text-center text-[#6E7385]/50">
-            <span className="material-symbols-outlined text-5xl mb-2 block text-[#5B50E5]/30">category</span>
-            <p className="font-semibold text-sm">Belum ada kategori</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                <tr>
+                  <th className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Nama Kategori</th>
+                  <th className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Deskripsi</th>
+                  <th className="text-center px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Jumlah Produk</th>
+                  {isAdmin && <th className="text-right px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Aksi</th>}
+                </tr>
+              </thead>
+              <tbody>
+                <SkeletonRow cols={isAdmin ? 4 : 3} rows={3} />
+              </tbody>
+            </table>
           </div>
+        ) : categories.length === 0 ? (
+          <EmptyState
+            icon="category"
+            title="Belum ada kategori"
+            description="Buat kategori baru untuk mengelompokkan produk-produk toko Anda."
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -291,12 +308,26 @@ function BrandSection({ isAdmin }: { isAdmin: boolean }) {
           </button>
         </div>
         {loading ? (
-          <div className="p-6 space-y-3">{[1,2,3].map(i => <div key={i} className="h-10 bg-[#EEF0FA] rounded-lg animate-pulse" />)}</div>
-        ) : brands.length === 0 ? (
-          <div className="py-16 text-center text-[#6E7385]/50">
-            <span className="material-symbols-outlined text-5xl mb-2 block text-[#5B50E5]/30">storefront</span>
-            <p className="font-semibold text-sm">Belum ada merek</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                <tr>
+                  <th className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Nama Merek</th>
+                  <th className="text-center px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Jumlah Produk</th>
+                  {isAdmin && <th className="text-right px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Aksi</th>}
+                </tr>
+              </thead>
+              <tbody>
+                <SkeletonRow cols={isAdmin ? 3 : 2} rows={3} />
+              </tbody>
+            </table>
           </div>
+        ) : brands.length === 0 ? (
+          <EmptyState
+            icon="storefront"
+            title="Belum ada merek"
+            description="Daftarkan merek produk yang Anda jual di toko."
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

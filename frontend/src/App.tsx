@@ -11,6 +11,8 @@ import ProductsPage from './pages/ProductsPage'
 import ReportsPage from './pages/ReportsPage'
 import MembersPage from './pages/MembersPage'
 import { HistoryPage } from './pages/HistoryPage'
+import { SkeletonCard } from './components/Skeleton'
+import { EmptyState } from './components/EmptyState'
 
 const CATEGORIES = [
   'Makanan Kucing',
@@ -1157,23 +1159,13 @@ function Dashboard() {
 
               {/* Grid Canvas */}
               {isLoading ? (
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-6">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="bg-white rounded-2xl border border-[#E2E8F0] h-64 animate-pulse">
-                      <div className="aspect-[4/3] bg-[#EEF0FA] w-full"></div>
-                      <div className="p-3 space-y-2">
-                        <div className="h-4 bg-[#EEF0FA] rounded w-3/4"></div>
-                        <div className="h-3 bg-[#EEF0FA] rounded w-1/2"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <SkeletonCard count={8} />
               ) : filteredProducts.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
-                  <span className="material-symbols-outlined text-[64px] text-[#6E7385]/40 mb-4">search_off</span>
-                  <h4 className="font-bold text-[#1E2330] text-base">{tText.emptyProducts}</h4>
-                  <p className="text-[#6E7385] text-xs mt-1">Sesuaikan filter atau tambahkan produk baru di menu Inventory.</p>
-                </div>
+                <EmptyState
+                  icon="search_off"
+                  title={tText.emptyProducts}
+                  description="Coba ubah kata kunci pencarian Anda atau sesuaikan filter kategori."
+                />
               ) : (
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-6">
                   {filteredProducts.map((product) => {

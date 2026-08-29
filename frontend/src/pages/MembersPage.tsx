@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Search, X, Check } from 'lucide-react'
 import type { Member } from '../types'
 import { fetchMembers, createMember, updateMember, deleteMember } from '../api'
+import { SkeletonRow } from '../components/Skeleton'
+import { EmptyState } from '../components/EmptyState'
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([])
@@ -183,21 +185,39 @@ export default function MembersPage() {
       <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden premium-shadow-sm flex-1 flex flex-col">
         <div className="overflow-x-auto flex-1">
           {isLoading && members.length === 0 ? (
-            <div className="p-8 text-center text-[#6E7385] flex flex-col items-center justify-center h-64 gap-2">
-              <div className="w-8 h-8 border-4 border-[#5B50E5] border-t-transparent rounded-full animate-spin"></div>
-              <span className="font-semibold text-sm mt-2">Memuat data member...</span>
-            </div>
+            <table className="w-full text-left border-collapse min-w-[600px]">
+              <thead>
+                <tr className="bg-[#EEF0FA]/40 border-b border-[#E2E8F0] text-[#6E7385]">
+                  <th className="p-4 font-bold text-xs uppercase tracking-wider pl-6">Kode Member</th>
+                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Nama</th>
+                  <th className="p-4 font-bold text-xs uppercase tracking-wider">No. Telepon</th>
+                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Poin Saat Ini</th>
+                  <th className="p-4 font-bold text-xs uppercase tracking-wider pr-6 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <SkeletonRow cols={5} rows={5} />
+              </tbody>
+            </table>
           ) : error ? (
             <div className="p-12 text-center text-[#E03131] flex flex-col items-center justify-center h-64">
               <span className="material-symbols-outlined text-[48px] mb-2">error</span>
               <p className="font-bold text-sm">{error}</p>
             </div>
           ) : members.length === 0 ? (
-            <div className="p-12 text-center text-[#6E7385] flex flex-col items-center justify-center h-64">
-              <span className="material-symbols-outlined text-[64px] text-[#6E7385]/30 mb-2">group</span>
-              <p className="font-bold text-sm">Belum Ada Member Terdaftar</p>
-              <p className="text-xs mt-1 text-[#6E7385]/70">Silakan tambahkan member baru melalui tombol di atas.</p>
-            </div>
+            <EmptyState
+              icon="group"
+              title="Belum ada member terdaftar"
+              description="Daftarkan pelanggan setia Anda untuk mendapatkan poin reward setiap transaksi."
+              action={
+                <button
+                  onClick={handleOpenAddModal}
+                  className="bg-[#5B50E5] hover:bg-[#4A3FC8] text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-md shadow-[#5B50E5]/20 hover:shadow-[#5B50E5]/30 cursor-pointer"
+                >
+                  Tambah Member Baru
+                </button>
+              }
+            />
           ) : (
             <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>

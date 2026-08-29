@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { fetchTransactions } from '../api'
 import type { Transaction } from '../types'
+import { SkeletonRow } from '../components/Skeleton'
+import { EmptyState } from '../components/EmptyState'
 
 interface HistoryPageProps {
   onViewReceipt: (receipt: any) => void
@@ -164,21 +166,32 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onViewReceipt }) => {
         {/* Table Content */}
         <div className="overflow-x-auto flex-1">
           {isLoading && transactions.length === 0 ? (
-            <div className="p-8 text-center text-[#6E7385] flex flex-col items-center justify-center h-64 gap-2">
-              <div className="w-8 h-8 border-4 border-[#5B50E5] border-t-transparent rounded-full animate-spin"></div>
-              <span className="font-semibold text-sm mt-2">Memuat riwayat transaksi...</span>
-            </div>
+            <table className="w-full text-left border-collapse min-w-[700px]">
+              <thead>
+                <tr className="bg-[#EEF0FA]/40 border-b border-[#E2E8F0] text-[#6E7385]">
+                  <th className="p-4 font-bold text-xs uppercase tracking-wider pl-6">No. Invoice</th>
+                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Tanggal</th>
+                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Kasir</th>
+                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Member</th>
+                  <th className="p-4 font-bold text-xs uppercase tracking-wider text-right">Total Belanja</th>
+                  <th className="p-4 font-bold text-xs uppercase tracking-wider pr-6 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <SkeletonRow cols={6} rows={5} />
+              </tbody>
+            </table>
           ) : error ? (
             <div className="p-12 text-center text-[#E03131] flex flex-col items-center justify-center h-64">
               <span className="material-symbols-outlined text-[48px] mb-2">error</span>
               <p className="font-bold text-sm">{error}</p>
             </div>
           ) : filteredTransactions.length === 0 ? (
-            <div className="p-12 text-center text-[#6E7385] flex flex-col items-center justify-center h-64">
-              <span className="material-symbols-outlined text-[64px] text-[#6E7385]/30 mb-2">receipt_long</span>
-              <p className="font-bold text-sm">Tidak Ada Riwayat Transaksi</p>
-              <p className="text-xs mt-1 text-[#6E7385]/70">Transaksi kasir yang sukses akan tampil di sini.</p>
-            </div>
+            <EmptyState
+              icon="receipt_long"
+              title="Tidak Ada Riwayat Transaksi"
+              description="Transaksi kasir yang sukses atau disinkronkan secara lokal akan tampil di sini."
+            />
           ) : (
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>

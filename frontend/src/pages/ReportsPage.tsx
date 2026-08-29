@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { fetchReports, fetchTransactions } from '../api'
 import type { ReportSummary, TopProductItem, ChartDataItem, Transaction } from '../types'
+import { SkeletonMetrics, SkeletonChart, SkeletonRow, SkeletonList } from '../components/Skeleton'
+import { EmptyState } from '../components/EmptyState'
 
 // Helpers
 const formatCurrency = (n: number) => {
@@ -97,10 +99,34 @@ export default function ReportsPage() {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-28 bg-white border border-[#E2E8F0] rounded-2xl animate-pulse" />
-          ))}
+        <div className="space-y-6">
+          <SkeletonMetrics count={4} />
+          <SkeletonChart />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-5 bg-white rounded-2xl p-5 border border-[#E2E8F0] shadow-sm flex flex-col">
+              <div className="h-4 bg-[#EEF0FA] rounded w-32 mb-4 animate-pulse" />
+              <SkeletonList count={5} />
+            </div>
+            <div className="lg:col-span-7 bg-white rounded-2xl p-5 border border-[#E2E8F0] shadow-sm flex flex-col">
+              <div className="h-4 bg-[#EEF0FA] rounded w-36 mb-4 animate-pulse" />
+              <div className="overflow-x-auto flex-1">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-[#6E7385] font-bold border-b border-[#E2E8F0] pb-2 text-left uppercase text-[9px] tracking-wider">
+                      <th className="pb-2">Invoice</th>
+                      <th className="pb-2">Tanggal</th>
+                      <th className="pb-2">Kasir</th>
+                      <th className="pb-2 text-center">Metode</th>
+                      <th className="pb-2 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <SkeletonRow cols={5} rows={5} />
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       ) : summary ? (
         <>
@@ -307,10 +333,11 @@ export default function ReportsPage() {
           </div>
         </>
       ) : (
-        <div className="py-20 text-center text-[#6E7385]/55">
-          <span className="material-symbols-outlined text-5xl mb-2 text-[#5B50E5]/30">bar_chart</span>
-          <p className="font-bold text-sm">Tidak ada data laporan tersedia</p>
-        </div>
+        <EmptyState
+          icon="bar_chart"
+          title="Tidak Ada Data Laporan Tersedia"
+          description="Laporan analisis penjualan akan muncul di sini setelah transaksi berhasil terekam."
+        />
       )}
     </main>
   )
