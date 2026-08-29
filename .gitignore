@@ -16,3 +16,5 @@ build/
 *.log
 .agents/
 skills-lock.json
+/prisma/
+/prisma7.config.ts
