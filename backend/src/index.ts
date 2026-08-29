@@ -13,9 +13,17 @@ import { transactionsRoutes } from './routes/transactions'
 import { membersRoutes } from './routes/members'
 import { hashPassword, verifyPassword } from './utils/password'
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
-const adapter = new PrismaPg(pool)
-const prisma = new PrismaClient({ adapter })
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  console.error("==================================================");
+  console.error("FATAL ERROR: DATABASE_URL environment variable is missing!");
+  console.error("Please configure it in the Vercel Dashboard Settings.");
+  console.error("==================================================");
+}
+
+const pool = new pg.Pool(databaseUrl ? { connectionString: databaseUrl } : undefined);
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 const app = new Elysia()
   .use(cors())
