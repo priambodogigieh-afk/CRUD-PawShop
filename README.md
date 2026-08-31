@@ -243,3 +243,29 @@ Pemeriksaan tipe data statis dilakukan menggunakan compiler TypeScript (`tsc`) d
   cd backend
   bun x tsc --noEmit
   ```
+
+### Hasil Pengujian Lint & Type Checking (Verification Results)
+
+Setelah dilakukan optimasi kode dan perbaikan konfigurasi, berikut adalah hasil verifikasi statis terbaru:
+
+1. **Hasil Lint Test (Oxlint)**:
+   ```bash
+   bun run lint
+   
+   # Hasil:
+   Found 9 warnings and 0 errors.
+   Finished in 46ms on 15 files with 116 rules using 16 threads.
+   ```
+   *Catatan: 9 peringatan yang tersisa merupakan catatan dari React Compiler (set-state-in-effect) saat memanggil setState pada useEffect yang memuat data asinkron, dan sepenuhnya aman diabaikan karena tidak mempengaruhi fungsionalitas.*
+
+2. **Hasil Type Check (TypeScript)**:
+   * **Frontend**:
+     ```bash
+     bun x tsc --noEmit
+     # Berhasil lolos tanpa ada error (0 errors).
+     ```
+   * **Backend**:
+     ```bash
+     bun x tsc --noEmit
+     # Berhasil lolos tanpa ada error (0 errors) setelah perbaikan moduleResolution.
+     ```
