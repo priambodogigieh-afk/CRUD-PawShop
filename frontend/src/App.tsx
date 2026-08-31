@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { LogOut } from 'lucide-react'
 import type { Product, Member } from './types'
@@ -188,6 +188,18 @@ const TRANSLATIONS = {
   }
 }
 
+function generateInvoiceNo(): string {
+  return `INV-${Date.now().toString().slice(-8)}`
+}
+
+function generateOfflineInvoiceNo(): string {
+  return `INV-OFF-${Date.now().toString().slice(-6)}`
+}
+
+function getFormattedDate(): string {
+  return new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
+}
+
 function Dashboard() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -206,7 +218,9 @@ function Dashboard() {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine)
 
   // Navigation State
-  const [activeTab, setActiveTab] = useState<'register' | 'inventory' | 'categories' | 'members' | 'reports' | 'history'>('register')
+  const [activeTab, setActiveTab] = useState<'register' | 'inventory' | 'categories' | 'members' | 'reports' | 'history'>(() => {
+    return user?.role === 'ADMIN' ? 'inventory' : 'register'
+  })
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false)
   const [isCartOpenMobile, setIsCartOpenMobile] = useState<boolean>(false)
 
@@ -233,72 +247,16 @@ function Dashboard() {
   // Toast State
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
-  // Network Status Event Listeners & Auto-Sync
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true)
-      showToast('Koneksi internet terhubung kembali!', 'success')
-      syncOfflineTransactions()
-    }
-    const handleOffline = () => {
-      setIsOnline(false)
-      showToast('Koneksi internet terputus. Beralih ke Mode Offline.', 'error')
-    }
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
+  // Memoized callback to show toast messages
+  const showToast = useCallback((message: string, type: 'success' | 'error') => {
+    setToast({ message, type })
+    setTimeout(() => {
+      setToast(null)
+    }, 3000)
   }, [])
-
-  // Sync offline transactions if online on mount
-  useEffect(() => {
-    if (isOnline) {
-      syncOfflineTransactions()
-    }
-  }, [isOnline])
 
   // Load products on mount
-  useEffect(() => {
-    loadProducts()
-  }, [])
-
-  // Load members on mount or tab change to POS
-  const loadMembers = async () => {
-    try {
-      const data = await fetchMembers()
-      setMembers(data)
-      localStorage.setItem('pawshop_members_cache', JSON.stringify(data))
-    } catch (err) {
-      console.error('Error fetching members:', err)
-      const cached = localStorage.getItem('pawshop_members_cache')
-      if (cached) {
-        setMembers(JSON.parse(cached))
-      }
-    }
-  }
-
-  useEffect(() => {
-    if (activeTab === 'register') {
-      loadMembers()
-    }
-  }, [activeTab])
-
-  // Set default active tab based on role
-  useEffect(() => {
-    if (user) {
-      if (user.role === 'ADMIN') {
-        setActiveTab('inventory')
-      } else {
-        setActiveTab('register')
-      }
-    }
-  }, [user])
-
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     setIsLoading(true)
     try {
       const data = await fetchProducts()
@@ -316,9 +274,10 @@ function Dashboard() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [showToast, tText.refresh])
 
-  const syncOfflineTransactions = async () => {
+  // Sync offline transactions if online
+  const syncOfflineTransactions = useCallback(async () => {
     const queueStr = localStorage.getItem('pawshop_offline_queue')
     if (!queueStr) return
 
@@ -359,14 +318,62 @@ function Dashboard() {
       showToast(`Berhasil menyinkronkan ${successCount} transaksi offline ke server!`, 'success')
       loadProducts()
     }
-  }
+  }, [showToast, loadProducts])
 
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type })
-    setTimeout(() => {
-      setToast(null)
-    }, 3000)
-  }
+  // Load members on mount or tab change to POS
+  const loadMembers = useCallback(async () => {
+    try {
+      const data = await fetchMembers()
+      setMembers(data)
+      localStorage.setItem('pawshop_members_cache', JSON.stringify(data))
+    } catch (err) {
+      console.error('Error fetching members:', err)
+      const cached = localStorage.getItem('pawshop_members_cache')
+      if (cached) {
+        setMembers(JSON.parse(cached))
+      }
+    }
+  }, [])
+
+  // Network Status Event Listeners & Auto-Sync
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      showToast('Koneksi internet terhubung kembali!', 'success')
+      syncOfflineTransactions()
+    }
+    const handleOffline = () => {
+      setIsOnline(false)
+      showToast('Koneksi internet terputus. Beralih ke Mode Offline.', 'error')
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [showToast, syncOfflineTransactions])
+
+  // Sync offline transactions if online on mount
+  useEffect(() => {
+    if (isOnline) {
+      syncOfflineTransactions()
+    }
+  }, [isOnline, syncOfflineTransactions])
+
+  // Load products on mount
+  useEffect(() => {
+    loadProducts()
+  }, [loadProducts])
+
+  // Load members on mount or tab change to POS
+  useEffect(() => {
+    if (activeTab === 'register') {
+      loadMembers()
+    }
+  }, [activeTab, loadMembers])
 
 
 
@@ -467,8 +474,8 @@ function Dashboard() {
     }
 
     const receiptData = {
-      invoiceNo: `INV-${Date.now().toString().slice(-8)}`,
-      date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+      invoiceNo: generateInvoiceNo(),
+      date: getFormattedDate(),
       cashier: user?.name || 'Kasir',
       items: cart.map(item => ({
         name: item.product.name,
@@ -511,11 +518,12 @@ function Dashboard() {
         setProducts(updatedProducts)
         localStorage.setItem('pawshop_products_cache', JSON.stringify(updatedProducts))
 
-        receiptData.invoiceNo = `INV-OFF-${Date.now().toString().slice(-6)}`
+        receiptData.invoiceNo = generateOfflineInvoiceNo()
         receiptData.isOffline = true
         setLastTransaction(receiptData)
         showToast(`Transaksi Sukses (Lokal/Offline)! Kembalian: ${formatCurrency(changeAmount)}`, 'success')
       } catch (err) {
+        console.error('Save offline transaction error:', err)
         showToast('Gagal menyimpan transaksi secara lokal.', 'error')
       }
       return
