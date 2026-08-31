@@ -213,3 +213,33 @@ tests\unit.test.ts:
 Ran 16 tests across 2 files. [730.00ms]
 ```
 
+## 🧹 Linting & Format Checking
+
+Proyek ini menggunakan **Oxlint** untuk menganalisis kode secara statis (*linting*) pada frontend guna mendeteksi potensi bug, error, dan ketidakkonsistenan kode dengan cepat.
+
+### Cara Menjalankan Lint Test
+
+1. Masuk ke direktori `frontend`:
+   ```bash
+   cd frontend
+   ```
+2. Jalankan perintah lint:
+   ```bash
+   bun run lint
+   # atau
+   npm run lint
+   ```
+
+### Pemeriksaan Tipe (Type Checking)
+
+Pemeriksaan tipe data statis dilakukan menggunakan compiler TypeScript (`tsc`) di kedua sisi aplikasi tanpa menghasilkan berkas output (`--noEmit`):
+* **Frontend**:
+  ```bash
+  cd frontend
+  bun x tsc --noEmit
+  ```
+* **Backend**:
+  ```bash
+  cd backend
+  bun x tsc --noEmit
+  ```
