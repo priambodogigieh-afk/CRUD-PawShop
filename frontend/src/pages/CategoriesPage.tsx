@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent, useCallback } from 'react'
 import {
   fetchCategories, createCategory, updateCategory, deleteCategory,
   fetchBrands, createBrand, updateBrand, deleteBrand
@@ -11,10 +11,10 @@ import { EmptyState } from '../components/EmptyState'
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function useToast() {
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
-  const show = (msg: string, type: 'success' | 'error' = 'success') => {
+  const show = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3000)
-  }
+  }, [])
   return { toast, show }
 }
 
@@ -28,14 +28,14 @@ function CategorySection({ isAdmin }: { isAdmin: boolean }) {
   const [submitting, setSubmitting] = useState(false)
   const { toast, show } = useToast()
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try { setCategories(await fetchCategories()) }
     catch (e: any) { show(e.message, 'error') }
     finally { setLoading(false) }
-  }
+  }, [show])
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [load])
 
   const resetForm = () => { setEditingId(null); setFormName(''); setFormDesc('') }
 
@@ -212,14 +212,14 @@ function BrandSection({ isAdmin }: { isAdmin: boolean }) {
   const [submitting, setSubmitting] = useState(false)
   const { toast, show } = useToast()
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try { setBrands(await fetchBrands()) }
     catch (e: any) { show(e.message, 'error') }
     finally { setLoading(false) }
-  }
+  }, [show])
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [load])
 
   const resetForm = () => { setEditingId(null); setFormName('') }
 

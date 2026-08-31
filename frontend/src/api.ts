@@ -16,7 +16,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
   let data: any
   try {
     data = text ? JSON.parse(text) : {}
-  } catch (e) {
+  } catch {
     data = { error: text || `HTTP error ${res.status}` }
   }
 

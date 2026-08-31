@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, type FormEvent } from 'react'
+import { useState, useEffect, useMemo, type FormEvent, useCallback } from 'react'
 import { fetchProducts, createProduct, updateProduct, deleteProduct, fetchCategories, fetchBrands } from '../api'
 import type { Product, Category, Brand, ProductInput } from '../types'
 import { useAuth } from '../context/AuthContext'
@@ -15,12 +15,23 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+function isExpiringSoon(date: string | null) {
+  if (!date) return false
+  const days = (new Date(date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+  return days >= 0 && days <= 30
+}
+
+function isExpired(date: string | null) {
+  if (!date) return false
+  return new Date(date) < new Date()
+}
+
 function useToast() {
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
-  const show = (msg: string, type: 'success' | 'error' = 'success') => {
+  const show = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3500)
-  }
+  }, [])
   return { toast, show }
 }
 
@@ -304,7 +315,7 @@ export default function ProductsPage() {
   // Delete confirm
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       const [prods, cats, brds] = await Promise.all([fetchProducts(), fetchCategories(), fetchBrands()])
@@ -313,9 +324,9 @@ export default function ProductsPage() {
       setBrands(brds)
     } catch (e: any) { show(e.message, 'error') }
     finally { setLoading(false) }
-  }
+  }, [show])
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [load])
 
   // Client-side filter + sort (fast UX, no debounce needed for small datasets)
   const filtered = useMemo(() => {
@@ -357,16 +368,6 @@ export default function ProductsPage() {
     finally { setDeletingId(null) }
   }
 
-  const isExpiringSoon = (date: string | null) => {
-    if (!date) return false
-    const days = (new Date(date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    return days >= 0 && days <= 30
-  }
-
-  const isExpired = (date: string | null) => {
-    if (!date) return false
-    return new Date(date) < new Date()
-  }
 
   return (
     <main className="flex-1 p-6 space-y-5 overflow-y-auto animate-fade-in-up">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Plus, Edit, Trash2, Search, X, Check } from 'lucide-react'
 import type { Member } from '../types'
 import { fetchMembers, createMember, updateMember, deleteMember } from '../api'
@@ -27,7 +27,7 @@ export default function MembersPage() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  const loadMembers = async () => {
+  const loadMembers = useCallback(async () => {
     setIsLoading(true)
     try {
       const data = await fetchMembers(search)
@@ -38,14 +38,14 @@ export default function MembersPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [search])
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       loadMembers()
     }, 300)
     return () => clearTimeout(delayDebounce)
-  }, [search])
+  }, [loadMembers])
 
   const handleOpenAddModal = () => {
     setEditingMember(null)

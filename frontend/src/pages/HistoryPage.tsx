@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { fetchTransactions } from '../api'
 import type { Transaction } from '../types'
 import { SkeletonRow } from '../components/Skeleton'
@@ -10,12 +10,11 @@ interface HistoryPageProps {
 
 export const HistoryPage: React.FC<HistoryPageProps> = ({ onViewReceipt }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
@@ -57,31 +56,26 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onViewReceipt }) => {
 
       const combined = [...offlineItems, ...data]
       setTransactions(combined)
-      setFilteredTransactions(combined)
     } catch (err: any) {
       setError(err.message || 'Gagal memuat riwayat penjualan.')
     } finally {
       setIsLoading(false)
     }
-  }
-
-  useEffect(() => {
-    loadTransactions()
   }, [])
 
   useEffect(() => {
+    loadTransactions()
+  }, [loadTransactions])
+
+  const filteredTransactions = useMemo(() => {
     const term = searchTerm.trim().toLowerCase()
-    if (!term) {
-      setFilteredTransactions(transactions)
-    } else {
-      const filtered = transactions.filter(
-        tx =>
-          tx.invoiceNumber.toLowerCase().includes(term) ||
-          tx.cashierName.toLowerCase().includes(term) ||
-          (tx.memberName && tx.memberName.toLowerCase().includes(term))
-      )
-      setFilteredTransactions(filtered)
-    }
+    if (!term) return transactions
+    return transactions.filter(
+      tx =>
+        tx.invoiceNumber.toLowerCase().includes(term) ||
+        tx.cashierName.toLowerCase().includes(term) ||
+        (tx.memberName && tx.memberName.toLowerCase().includes(term))
+    )
   }, [searchTerm, transactions])
 
   const formatCurrency = (value: number) => {

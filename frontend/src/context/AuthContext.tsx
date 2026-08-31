@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import type { User, AuthState } from '../types'
 

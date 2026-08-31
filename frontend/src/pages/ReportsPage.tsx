@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { fetchReports, fetchTransactions } from '../api'
 import type { ReportSummary, TopProductItem, ChartDataItem, Transaction } from '../types'
 import { SkeletonMetrics, SkeletonChart, SkeletonRow, SkeletonList } from '../components/Skeleton'
@@ -32,7 +32,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -54,11 +54,11 @@ export default function ReportsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [reportType])
 
   useEffect(() => {
     loadData()
-  }, [reportType])
+  }, [loadData])
 
   // Custom Chart dimensions
   const chartHeight = 180
