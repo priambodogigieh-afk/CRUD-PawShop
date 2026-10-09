@@ -287,4 +287,317 @@ export function transactionsRoutes(prisma: PrismaClient) {
         }))
       })
     })
+
+    // ==========================================
+    // MIDTRANS PAYMENT GATEWAY INTEGRATION
+    // ==========================================
+
+    // GET Midtrans Client Config
+    .get('/midtrans/config', () => {
+      const config = getMidtransConfig()
+      return {
+        clientKey: config.clientKey,
+        merchantId: config.merchantId,
+        isProduction: config.isProduction
+      }
+    })
+
+    // POST Create Midtrans Snap Token
+    .post('/midtrans/token', async ({ body, set, user }: any) => {
+      try {
+        if (!user) {
+          set.status = 401
+          return { error: 'Unauthorized: User authentication required' }
+        }
+
+        if (!body.items || body.items.length === 0) {
+          set.status = 400
+          return { error: 'Keranjang belanja tidak boleh kosong' }
+        }
+
+        const config = getMidtransConfig()
+        const invoiceNumber = `INV-MID-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`
+
+        // Check stock & calculate amount
+        let subtotal = 0
+        const itemDetails: any[] = []
+
+        for (const item of body.items) {
+          const dbProduct = await prisma.product.findUnique({
+            where: { id: item.productId }
+          })
+
+          if (!dbProduct) {
+            set.status = 404
+            return { error: `Produk #${item.productId} tidak ditemukan` }
+          }
+
+          if (dbProduct.stock < item.quantity) {
+            set.status = 400
+            return { error: `Stok "${dbProduct.name}" tidak mencukupi (Tersedia: ${dbProduct.stock})` }
+          }
+
+          const lineTotal = dbProduct.sellingPrice * item.quantity
+          subtotal += lineTotal
+
+          // Midtrans item_details name limit is 50 chars
+          const cleanName = dbProduct.name.length > 45 ? dbProduct.name.substring(0, 45) + '...' : dbProduct.name
+          itemDetails.push({
+            id: `PROD-${dbProduct.id}`,
+            price: Math.round(dbProduct.sellingPrice),
+            quantity: item.quantity,
+            name: cleanName
+          })
+        }
+
+        // Calculate tax 8% to match POS
+        const taxAmount = Math.round(subtotal * 0.08)
+        if (taxAmount > 0) {
+          itemDetails.push({
+            id: 'TAX-8',
+            price: taxAmount,
+            quantity: 1,
+            name: 'Pajak PPn (8%)'
+          })
+        }
+
+        const grossAmount = subtotal + taxAmount
+
+        // Fetch customer info if member provided
+        let customerDetails: any = {
+          first_name: user.name || 'Pelanggan Toko',
+          phone: '08123456789'
+        }
+
+        if (body.memberId) {
+          const member = await prisma.member.findUnique({
+            where: { id: body.memberId }
+          })
+          if (member) {
+            customerDetails = {
+              first_name: member.name,
+              phone: member.phone
+            }
+          }
+        }
+
+        // Request Snap Token from Midtrans API
+        const authHeader = `Basic ${Buffer.from(config.serverKey + ':').toString('base64')}`
+        const snapPayload = {
+          transaction_details: {
+            order_id: invoiceNumber,
+            gross_amount: grossAmount
+          },
+          item_details: itemDetails,
+          customer_details: customerDetails,
+          callbacks: {
+            finish: 'http://localhost:5173'
+          }
+        }
+
+        const snapResponse = await fetch(config.snapUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': authHeader
+          },
+          body: JSON.stringify(snapPayload)
+        })
+
+        const snapData = await snapResponse.json()
+
+        if (!snapResponse.ok || !snapData.token) {
+          console.error('Midtrans Snap error response:', snapData)
+          set.status = 502
+          return {
+            error: snapData.error_messages ? snapData.error_messages.join(', ') : 'Gagal menghasilkan token pembayaran Midtrans',
+            details: snapData
+          }
+        }
+
+        return {
+          success: true,
+          token: snapData.token,
+          redirectUrl: snapData.redirect_url,
+          invoiceNumber,
+          grossAmount,
+          clientKey: config.clientKey
+        }
+      } catch (err: any) {
+        console.error('Midtrans Token Creation Error:', err)
+        set.status = 500
+        return { error: err.message || 'Internal Server Error pada Midtrans Token' }
+      }
+    }, {
+      body: t.Object({
+        memberId: t.Optional(t.Nullable(t.Integer())),
+        items: t.Array(t.Object({
+          productId: t.Integer({ minimum: 1 }),
+          quantity: t.Integer({ minimum: 1 })
+        }))
+      })
+    })
+
+    // POST Finish Midtrans Transaction (after customer paid via Snap)
+    .post('/midtrans/finish', async ({ body, set, user }: any) => {
+      try {
+        if (!user) {
+          set.status = 401
+          return { error: 'Unauthorized: User authentication required' }
+        }
+
+        const { invoiceNumber, paymentType, memberId, items } = body
+
+        if (!invoiceNumber || !items || items.length === 0) {
+          set.status = 400
+          return { error: 'Parameter transaksi Midtrans tidak lengkap' }
+        }
+
+        // Check if invoice already recorded to prevent duplicate records
+        const existingTx = await prisma.transaction.findUnique({
+          where: { invoiceNumber },
+          include: { items: true }
+        })
+        if (existingTx) {
+          return { success: true, transaction: existingTx }
+        }
+
+        // Process inventory reduction and record transaction
+        const result = await prisma.$transaction(async (tx) => {
+          let calculatedSubtotal = 0
+          const itemsToCreate = []
+
+          for (const item of items) {
+            const dbProduct = await tx.product.findUnique({
+              where: { id: item.productId }
+            })
+
+            if (!dbProduct) {
+              throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan`)
+            }
+
+            // Subtract stock
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { stock: Math.max(0, dbProduct.stock - item.quantity) }
+            })
+
+            calculatedSubtotal += dbProduct.sellingPrice * item.quantity
+
+            itemsToCreate.push({
+              productId: item.productId,
+              productName: dbProduct.name,
+              quantity: item.quantity,
+              price: dbProduct.sellingPrice,
+              costPrice: dbProduct.costPrice
+            })
+          }
+
+          const tax = Math.round(calculatedSubtotal * 0.08)
+          const totalAmount = calculatedSubtotal + tax
+
+          // Member points
+          let memberData = {}
+          let pointsEarned = 0
+          if (memberId) {
+            const member = await tx.member.findUnique({
+              where: { id: memberId }
+            })
+            if (member) {
+              pointsEarned = Math.floor(totalAmount / 10000)
+              await tx.member.update({
+                where: { id: member.id },
+                data: { points: member.points + pointsEarned }
+              })
+              memberData = {
+                memberId: member.id,
+                memberCode: member.memberCode,
+                memberName: member.name,
+                pointsEarned
+              }
+            }
+          }
+
+          const finalPaymentMethod = paymentType
+            ? `MIDTRANS (${String(paymentType).toUpperCase()})`
+            : 'MIDTRANS'
+
+          const transaction = await tx.transaction.create({
+            data: {
+              invoiceNumber,
+              totalAmount,
+              paymentMethod: finalPaymentMethod,
+              cashierId: user.id,
+              cashierName: user.name,
+              ...memberData,
+              items: {
+                create: itemsToCreate
+              }
+            },
+            include: {
+              items: true
+            }
+          })
+
+          return transaction
+        })
+
+        return { success: true, transaction: result }
+      } catch (err: any) {
+        console.error('Error saving finished Midtrans transaction:', err)
+        set.status = 400
+        return { error: err.message || 'Gagal menyimpan transaksi Midtrans' }
+      }
+    }, {
+      body: t.Object({
+        invoiceNumber: t.String(),
+        paymentType: t.Optional(t.String()),
+        memberId: t.Optional(t.Nullable(t.Integer())),
+        items: t.Array(t.Object({
+          productId: t.Integer({ minimum: 1 }),
+          quantity: t.Integer({ minimum: 1 })
+        }))
+      })
+    })
+
+    // GET Midtrans Status Check
+    .get('/midtrans/status/:orderId', async ({ params, set }) => {
+      try {
+        const config = getMidtransConfig()
+        const authHeader = `Basic ${Buffer.from(config.serverKey + ':').toString('base64')}`
+        const statusRes = await fetch(`${config.apiBaseUrl}/${params.orderId}/status`, {
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': authHeader
+          }
+        })
+        const statusData = await statusRes.json()
+        return statusData
+      } catch (err: any) {
+        set.status = 500
+        return { error: err.message || 'Gagal memeriksa status Midtrans' }
+      }
+    })
+}
+
+// Helper: Midtrans Configuration loader
+function getMidtransConfig() {
+  const rawServerKey = (process.env.MIDTRANS_SERVER_KEY || '').trim()
+  const serverKey = rawServerKey.replace(/^SB-Mid-server\s+/, 'SB-Mid-server-').replace(/^Mid-server\s+/, 'Mid-server-')
+  const clientKey = (process.env.MIDTRANS_CLIENT_KEY || '').trim()
+  const merchantId = (process.env.MIDTRANS_MERCHANT_ID || '').trim()
+  
+  // Set isProduction based on env var (default false for Sandbox testing)
+  const isProduction = process.env.MIDTRANS_IS_PRODUCTION === 'true'
+
+  const snapUrl = isProduction
+    ? 'https://app.midtrans.com/snap/v1/transactions'
+    : 'https://app.sandbox.midtrans.com/snap/v1/transactions'
+
+  const apiBaseUrl = isProduction
+    ? 'https://api.midtrans.com/v2'
+    : 'https://api.sandbox.midtrans.com/v2'
+
+  return { serverKey, clientKey, merchantId, isProduction, snapUrl, apiBaseUrl }
 }

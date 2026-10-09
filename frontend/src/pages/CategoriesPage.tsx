@@ -7,6 +7,18 @@ import type { Category, Brand } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { SkeletonRow } from '../components/Skeleton'
 import { EmptyState } from '../components/EmptyState'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { RefreshCw, Edit, Trash2 } from 'lucide-react'
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function useToast() {
@@ -94,29 +106,36 @@ function CategorySection({ isAdmin }: { isAdmin: boolean }) {
             {editingId ? 'Edit Kategori' : 'Tambah Kategori Baru'}
           </h3>
           <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-            <input
-              className="flex-1 border border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10"
+            <Input
+              className="flex-1 border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm focus-visible:border-[#5B50E5] focus-visible:ring-[#5B50E5]/10 h-10"
               placeholder="Nama kategori (e.g. Makanan Kucing)"
               value={formName}
               onChange={e => setFormName(e.target.value)}
               required
             />
-            <input
-              className="flex-1 border border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10"
+            <Input
+              className="flex-1 border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm focus-visible:border-[#5B50E5] focus-visible:ring-[#5B50E5]/10 h-10"
               placeholder="Deskripsi (opsional)"
               value={formDesc}
               onChange={e => setFormDesc(e.target.value)}
             />
             <div className="flex gap-2 shrink-0">
-              <button type="submit" disabled={submitting}
-                className="bg-[#5B50E5] hover:bg-[#4A3FC8] disabled:opacity-60 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all">
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="bg-[#5B50E5] hover:bg-[#4A3FC8] text-white px-5 rounded-xl text-sm font-semibold h-10 cursor-pointer shadow-sm shadow-[#5B50E5]/20"
+              >
                 {submitting ? 'Menyimpan...' : editingId ? 'Simpan' : 'Tambah'}
-              </button>
+              </Button>
               {editingId && (
-                <button type="button" onClick={resetForm}
-                  className="bg-[#EEF0FA] hover:bg-white border border-[#E2E8F0] text-[#6E7385] px-4 py-2.5 rounded-xl text-sm font-semibold transition-all">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetForm}
+                  className="bg-[#EEF0FA] hover:bg-white border-[#E2E8F0] text-[#6E7385] px-4 rounded-xl text-sm font-semibold h-10 cursor-pointer"
+                >
                   Batal
-                </button>
+                </Button>
               )}
             </div>
           </form>
@@ -129,27 +148,35 @@ function CategorySection({ isAdmin }: { isAdmin: boolean }) {
           <h3 className="font-bold text-[#1E2330] flex items-center gap-2">
             <span className="material-symbols-outlined text-[#5B50E5]">category</span>
             Daftar Kategori
-            <span className="ml-1 bg-[#EEF0FA] text-[#5B50E5] text-xs font-bold px-2 py-0.5 rounded-full">{categories.length}</span>
+            <Badge variant="outline" className="ml-1 bg-[#EEF0FA] border-transparent text-[#5B50E5] text-xs font-bold px-2 py-0.5 rounded-full">
+              {categories.length}
+            </Badge>
           </h3>
-          <button onClick={load} className="text-[#6E7385] hover:bg-[#EEF0FA] p-2 rounded-lg transition-colors" title="Refresh">
-            <span className={`material-symbols-outlined text-lg ${loading ? 'animate-spin' : ''}`}>refresh</span>
-          </button>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={load}
+            className="text-[#6E7385] hover:bg-[#EEF0FA] p-2 rounded-lg cursor-pointer h-8 w-8"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
         {loading ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
-                <tr>
-                  <th className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Nama Kategori</th>
-                  <th className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Deskripsi</th>
-                  <th className="text-center px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Jumlah Produk</th>
-                  {isAdmin && <th className="text-right px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Aksi</th>}
-                </tr>
-              </thead>
-              <tbody>
+            <Table className="w-full text-sm">
+              <TableHeader className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                <TableRow>
+                  <TableHead className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Nama Kategori</TableHead>
+                  <TableHead className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Deskripsi</TableHead>
+                  <TableHead className="text-center px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Jumlah Produk</TableHead>
+                  {isAdmin && <TableHead className="text-right px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Aksi</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 <SkeletonRow cols={isAdmin ? 4 : 3} rows={3} />
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         ) : categories.length === 0 ? (
           <EmptyState
@@ -159,43 +186,53 @@ function CategorySection({ isAdmin }: { isAdmin: boolean }) {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
-                <tr>
-                  <th className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Nama Kategori</th>
-                  <th className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Deskripsi</th>
-                  <th className="text-center px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Jumlah Produk</th>
-                  {isAdmin && <th className="text-right px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Aksi</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E2E8F0]">
+            <Table className="w-full text-sm">
+              <TableHeader className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                <TableRow>
+                  <TableHead className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Nama Kategori</TableHead>
+                  <TableHead className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Deskripsi</TableHead>
+                  <TableHead className="text-center px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Jumlah Produk</TableHead>
+                  {isAdmin && <TableHead className="text-right px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Aksi</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-[#E2E8F0]">
                 {categories.map(cat => (
-                  <tr key={cat.id} className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="px-6 py-4 font-semibold text-[#1E2330]">{cat.name}</td>
-                    <td className="px-6 py-4 text-[#6E7385]">{cat.description || <span className="italic text-[#6E7385]/40">—</span>}</td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center justify-center bg-[#EEF0FA] text-[#5B50E5] font-bold text-xs px-2.5 py-1 rounded-full">
+                  <TableRow key={cat.id} className="hover:bg-[#F8FAFC] transition-colors border-[#E2E8F0]">
+                    <TableCell className="px-6 py-4 font-semibold text-[#1E2330]">{cat.name}</TableCell>
+                    <TableCell className="px-6 py-4 text-[#6E7385]">{cat.description || <span className="italic text-[#6E7385]/40">—</span>}</TableCell>
+                    <TableCell className="px-6 py-4 text-center">
+                      <Badge variant="outline" className="inline-flex items-center justify-center bg-[#EEF0FA] border-transparent text-[#5B50E5] font-bold text-xs px-2.5 py-1 rounded-full">
                         {cat._count?.products ?? 0} produk
-                      </span>
-                    </td>
+                      </Badge>
+                    </TableCell>
                     {isAdmin && (
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => handleEdit(cat)}
-                            className="p-1.5 text-[#6E7385] hover:text-[#5B50E5] hover:bg-[#EEF0FA] rounded-lg transition-all" title="Edit">
-                            <span className="material-symbols-outlined text-lg">edit</span>
-                          </button>
-                          <button onClick={() => handleDelete(cat)}
-                            className="p-1.5 text-[#6E7385] hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Hapus">
-                            <span className="material-symbols-outlined text-lg">delete</span>
-                          </button>
+                      <TableCell className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleEdit(cat)}
+                            className="p-1.5 text-[#6E7385] hover:text-[#5B50E5] hover:bg-[#EEF0FA] rounded-lg cursor-pointer h-8 w-8"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleDelete(cat)}
+                            className="p-1.5 text-[#6E7385] hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer h-8 w-8"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
-                      </td>
+                      </TableCell>
                     )}
-                  </tr>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>
@@ -273,23 +310,30 @@ function BrandSection({ isAdmin }: { isAdmin: boolean }) {
             {editingId ? 'Edit Merek' : 'Tambah Merek Baru'}
           </h3>
           <form onSubmit={handleSubmit} className="flex gap-3">
-            <input
-              className="flex-1 border border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10"
+            <Input
+              className="flex-1 border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm focus-visible:border-[#5B50E5] focus-visible:ring-[#5B50E5]/10 h-10"
               placeholder="Nama merek (e.g. Royal Canin)"
               value={formName}
               onChange={e => setFormName(e.target.value)}
               required
             />
             <div className="flex gap-2 shrink-0">
-              <button type="submit" disabled={submitting}
-                className="bg-[#5B50E5] hover:bg-[#4A3FC8] disabled:opacity-60 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all">
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="bg-[#5B50E5] hover:bg-[#4A3FC8] text-white px-5 rounded-xl text-sm font-semibold h-10 cursor-pointer shadow-sm shadow-[#5B50E5]/20"
+              >
                 {submitting ? 'Menyimpan...' : editingId ? 'Simpan' : 'Tambah'}
-              </button>
+              </Button>
               {editingId && (
-                <button type="button" onClick={resetForm}
-                  className="bg-[#EEF0FA] hover:bg-white border border-[#E2E8F0] text-[#6E7385] px-4 py-2.5 rounded-xl text-sm font-semibold transition-all">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetForm}
+                  className="bg-[#EEF0FA] hover:bg-white border-[#E2E8F0] text-[#6E7385] px-4 rounded-xl text-sm font-semibold h-10 cursor-pointer"
+                >
                   Batal
-                </button>
+                </Button>
               )}
             </div>
           </form>
@@ -301,26 +345,34 @@ function BrandSection({ isAdmin }: { isAdmin: boolean }) {
           <h3 className="font-bold text-[#1E2330] flex items-center gap-2">
             <span className="material-symbols-outlined text-[#5B50E5]">storefront</span>
             Daftar Merek
-            <span className="ml-1 bg-[#EEF0FA] text-[#5B50E5] text-xs font-bold px-2 py-0.5 rounded-full">{brands.length}</span>
+            <Badge variant="outline" className="ml-1 bg-[#EEF0FA] border-transparent text-[#5B50E5] text-xs font-bold px-2 py-0.5 rounded-full">
+              {brands.length}
+            </Badge>
           </h3>
-          <button onClick={load} className="text-[#6E7385] hover:bg-[#EEF0FA] p-2 rounded-lg transition-colors" title="Refresh">
-            <span className={`material-symbols-outlined text-lg ${loading ? 'animate-spin' : ''}`}>refresh</span>
-          </button>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={load}
+            className="text-[#6E7385] hover:bg-[#EEF0FA] p-2 rounded-lg cursor-pointer h-8 w-8"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
         {loading ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
-                <tr>
-                  <th className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Nama Merek</th>
-                  <th className="text-center px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Jumlah Produk</th>
-                  {isAdmin && <th className="text-right px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Aksi</th>}
-                </tr>
-              </thead>
-              <tbody>
+            <Table className="w-full text-sm">
+              <TableHeader className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                <TableRow>
+                  <TableHead className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Nama Merek</TableHead>
+                  <TableHead className="text-center px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Jumlah Produk</TableHead>
+                  {isAdmin && <TableHead className="text-right px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Aksi</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 <SkeletonRow cols={isAdmin ? 3 : 2} rows={3} />
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         ) : brands.length === 0 ? (
           <EmptyState
@@ -330,41 +382,51 @@ function BrandSection({ isAdmin }: { isAdmin: boolean }) {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
-                <tr>
-                  <th className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Nama Merek</th>
-                  <th className="text-center px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Jumlah Produk</th>
-                  {isAdmin && <th className="text-right px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Aksi</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E2E8F0]">
+            <Table className="w-full text-sm">
+              <TableHeader className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                <TableRow>
+                  <TableHead className="text-left px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Nama Merek</TableHead>
+                  <TableHead className="text-center px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Jumlah Produk</TableHead>
+                  {isAdmin && <TableHead className="text-right px-6 py-3 font-semibold text-[#6E7385] text-xs uppercase tracking-wider">Aksi</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-[#E2E8F0]">
                 {brands.map(b => (
-                  <tr key={b.id} className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="px-6 py-4 font-semibold text-[#1E2330]">{b.name}</td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center justify-center bg-[#EEF0FA] text-[#5B50E5] font-bold text-xs px-2.5 py-1 rounded-full">
+                  <TableRow key={b.id} className="hover:bg-[#F8FAFC] transition-colors border-[#E2E8F0]">
+                    <TableCell className="px-6 py-4 font-semibold text-[#1E2330]">{b.name}</TableCell>
+                    <TableCell className="px-6 py-4 text-center">
+                      <Badge variant="outline" className="inline-flex items-center justify-center bg-[#EEF0FA] border-transparent text-[#5B50E5] font-bold text-xs px-2.5 py-1 rounded-full">
                         {b._count?.products ?? 0} produk
-                      </span>
-                    </td>
+                      </Badge>
+                    </TableCell>
                     {isAdmin && (
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => handleEdit(b)}
-                            className="p-1.5 text-[#6E7385] hover:text-[#5B50E5] hover:bg-[#EEF0FA] rounded-lg transition-all" title="Edit">
-                            <span className="material-symbols-outlined text-lg">edit</span>
-                          </button>
-                          <button onClick={() => handleDelete(b)}
-                            className="p-1.5 text-[#6E7385] hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Hapus">
-                            <span className="material-symbols-outlined text-lg">delete</span>
-                          </button>
+                      <TableCell className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleEdit(b)}
+                            className="p-1.5 text-[#6E7385] hover:text-[#5B50E5] hover:bg-[#EEF0FA] rounded-lg cursor-pointer h-8 w-8"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleDelete(b)}
+                            className="p-1.5 text-[#6E7385] hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer h-8 w-8"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
-                      </td>
+                      </TableCell>
                     )}
-                  </tr>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>

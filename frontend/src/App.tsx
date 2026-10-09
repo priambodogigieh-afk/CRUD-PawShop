@@ -1,8 +1,17 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import { LogOut } from 'lucide-react'
+import { LogOut, CreditCard, Banknote, QrCode, Sparkles, Loader2, ArrowLeftRight } from 'lucide-react'
 import type { Product, Member } from './types'
-import { fetchProducts, createTransaction, fetchMembers, deleteProduct } from './api'
+import {
+  fetchProducts,
+  createTransaction,
+  fetchMembers,
+  deleteProduct,
+  createMidtransSnapToken,
+  finishMidtransTransaction,
+  fetchMidtransConfig
+} from './api'
+import { loadSnapScript } from './utils/midtrans'
 import { useAuth } from './context/AuthContext'
 import LoginPage from './pages/LoginPage'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -13,6 +22,30 @@ import MembersPage from './pages/MembersPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { SkeletonCard } from './components/Skeleton'
 import { EmptyState } from './components/EmptyState'
+
+// Format payment method text for user receipts and labels
+function formatPaymentMethodName(method?: string): string {
+  if (!method) return 'Tunai (Cash)'
+  const upper = method.toUpperCase()
+  if (upper.includes('BANK_TRANSFER') || upper.includes('TRANSFER')) {
+    return upper.includes('MIDTRANS') ? 'Transfer Bank (Midtrans VA)' : 'Transfer Bank'
+  }
+  if (upper.includes('QRIS')) return 'QRIS (Midtrans)'
+  if (upper.includes('GOPAY')) return 'GoPay (Midtrans)'
+  if (upper.includes('SHOPEEPAY')) return 'ShopeePay (Midtrans)'
+  if (upper.includes('ECHANNEL') || upper.includes('MANDIRI')) return 'Mandiri Bill (Midtrans)'
+  if (upper.includes('CARD') || upper.includes('KREDIT') || upper.includes('DEBIT')) return 'Kartu Debit/Kredit (Midtrans)'
+  if (upper.includes('MIDTRANS')) return 'Midtrans (Online)'
+  if (upper === 'CASH' || upper === 'TUNAI') return 'Tunai (Cash)'
+  return method
+}
+
+// Check if a payment method is purely cash
+function isCashPayment(method?: string): boolean {
+  if (!method) return true
+  const upper = method.toUpperCase()
+  return upper === 'CASH' || upper === 'TUNAI' || upper === 'TUNAI (CASH)'
+}
 
 const CATEGORIES = [
   'Makanan Kucing',
@@ -237,6 +270,8 @@ function Dashboard() {
   const [members, setMembers] = useState<Member[]>([])
   const [memberPhone, setMemberPhone] = useState<string>('')
   const [cashReceived, setCashReceived] = useState<string>('')
+  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'TRANSFER' | 'MIDTRANS'>('CASH')
+  const [isMidtransLoading, setIsMidtransLoading] = useState<boolean>(false)
 
   // Delete Confirmation State
   const [deletingProductId, setDeletingProductId] = useState<number | null>(null)
@@ -490,6 +525,7 @@ function Dashboard() {
       },
       cash: cashReceivedVal,
       change: changeAmount,
+      paymentMethod: 'CASH',
       member: matchedMember ? {
         code: matchedMember.memberCode,
         name: matchedMember.name,
@@ -560,6 +596,243 @@ function Dashboard() {
       }
     } catch (err: any) {
       showToast(err.message || 'Gagal memproses transaksi.', 'error')
+    }
+  }
+
+  // POS Process Direct Transfer Payment
+  const handleProcessTransferPayment = async () => {
+    if (cart.length === 0) {
+      showToast(tText.cartEmpty, 'error')
+      return
+    }
+
+    if (memberPhone.trim() !== '') {
+      const found = members.find(m => m.phone === memberPhone.trim())
+      if (!found) {
+        showToast('Member tidak ditemukan! Harap periksa nomor HP atau kosongkan.', 'error')
+        return
+      }
+    }
+
+    const matchedMember = memberPhone.trim() !== '' ? members.find(m => m.phone === memberPhone.trim()) : null
+    const txPayload = {
+      paymentMethod: 'TRANSFER',
+      memberId: matchedMember ? matchedMember.id : null,
+      items: cart.map(item => ({
+        productId: item.product.id,
+        quantity: item.quantity
+      }))
+    }
+
+    const receiptData = {
+      invoiceNo: generateInvoiceNo(),
+      date: getFormattedDate(),
+      cashier: user?.name || 'Kasir',
+      items: cart.map(item => ({
+        name: item.product.name,
+        price: item.product.sellingPrice,
+        quantity: item.quantity,
+        total: item.product.sellingPrice * item.quantity
+      })),
+      totals: {
+        subtotal: cartTotals.subtotal,
+        tax: cartTotals.tax,
+        total: cartTotals.total
+      },
+      cash: cartTotals.total,
+      change: 0,
+      paymentMethod: 'TRANSFER',
+      member: matchedMember ? {
+        code: matchedMember.memberCode,
+        name: matchedMember.name,
+        points: matchedMember.points,
+        newPointsEarned: Math.floor(cartTotals.total / 10000)
+      } : null,
+      isOffline: false
+    }
+
+    if (!isOnline) {
+      try {
+        const queueStr = localStorage.getItem('pawshop_offline_queue')
+        const queue = queueStr ? JSON.parse(queueStr) : []
+        queue.push(txPayload)
+        localStorage.setItem('pawshop_offline_queue', JSON.stringify(queue))
+
+        const updatedProducts = products.map((p) => {
+          const cartItem = cart.find((item) => item.product.id === p.id)
+          if (cartItem) {
+            return { ...p, stock: Math.max(0, p.stock - cartItem.quantity) }
+          }
+          return p
+        })
+        setProducts(updatedProducts)
+        localStorage.setItem('pawshop_products_cache', JSON.stringify(updatedProducts))
+
+        receiptData.invoiceNo = generateOfflineInvoiceNo()
+        receiptData.isOffline = true
+        setLastTransaction(receiptData)
+        showToast('Transaksi Transfer Berhasil disimpan secara lokal!', 'success')
+      } catch (err) {
+        console.error('Save offline transfer error:', err)
+        showToast('Gagal menyimpan transaksi transfer secara lokal.', 'error')
+      }
+      return
+    }
+
+    try {
+      const res = await createTransaction(txPayload)
+      if (res.success) {
+        const updatedProducts = products.map((p) => {
+          const cartItem = cart.find((item) => item.product.id === p.id)
+          if (cartItem) {
+            return { ...p, stock: Math.max(0, p.stock - cartItem.quantity) }
+          }
+          return p
+        })
+        setProducts(updatedProducts)
+        localStorage.setItem('pawshop_products_cache', JSON.stringify(updatedProducts))
+
+        const finalReceiptData = {
+          ...receiptData,
+          invoiceNo: res.transaction?.invoiceNumber || receiptData.invoiceNo,
+          member: matchedMember ? {
+            code: matchedMember.memberCode,
+            name: matchedMember.name,
+            points: matchedMember.points + (res.transaction?.pointsEarned || 0),
+            newPointsEarned: res.transaction?.pointsEarned || 0
+          } : null
+        }
+        setLastTransaction(finalReceiptData)
+        showToast('Pembayaran Transfer Berhasil! Status: Lunas', 'success')
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Gagal memproses transaksi transfer.', 'error')
+    }
+  }
+
+  // POS Process Midtrans Payment
+  const handleProcessMidtransPayment = async () => {
+    if (cart.length === 0) {
+      showToast(tText.cartEmpty, 'error')
+      return
+    }
+
+    if (memberPhone.trim() !== '') {
+      const found = members.find(m => m.phone === memberPhone.trim())
+      if (!found) {
+        showToast('Member tidak ditemukan! Harap periksa nomor HP atau kosongkan.', 'error')
+        return
+      }
+    }
+
+    const matchedMember = memberPhone.trim() !== '' ? members.find(m => m.phone === memberPhone.trim()) : null
+
+    try {
+      setIsMidtransLoading(true)
+
+      // 1. Fetch Midtrans config from backend or fallback to env
+      const config = await fetchMidtransConfig().catch(() => ({
+        clientKey: import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '',
+        merchantId: '',
+        isProduction: false
+      }))
+
+      // 2. Load Snap script
+      await loadSnapScript(config.clientKey, config.isProduction)
+
+      if (!window.snap) {
+        throw new Error('Gagal menginisialisasi Midtrans Snap SDK')
+      }
+
+      // 3. Request Snap Token from backend
+      const tokenPayload = {
+        memberId: matchedMember ? matchedMember.id : null,
+        items: cart.map(item => ({
+          productId: item.product.id,
+          quantity: item.quantity
+        }))
+      }
+
+      const snapRes = await createMidtransSnapToken(tokenPayload)
+      if (!snapRes.success || !snapRes.token) {
+        throw new Error((snapRes as any).error || 'Gagal membuat token pembayaran Midtrans')
+      }
+
+      // 4. Open Midtrans Snap Popup
+      window.snap.pay(snapRes.token, {
+        onSuccess: async (result: any) => {
+          try {
+            // Save transaction to DB
+            const finishRes = await finishMidtransTransaction({
+              invoiceNumber: result.order_id || snapRes.invoiceNumber,
+              paymentType: result.payment_type || 'qris',
+              memberId: matchedMember ? matchedMember.id : null,
+              items: tokenPayload.items
+            })
+
+            // Update local stock
+            const updatedProducts = products.map((p) => {
+              const cartItem = cart.find((item) => item.product.id === p.id)
+              if (cartItem) {
+                return { ...p, stock: Math.max(0, p.stock - cartItem.quantity) }
+              }
+              return p
+            })
+            setProducts(updatedProducts)
+            localStorage.setItem('pawshop_products_cache', JSON.stringify(updatedProducts))
+
+            const finalReceiptData = {
+              invoiceNo: result.order_id || snapRes.invoiceNumber,
+              date: getFormattedDate(),
+              cashier: user?.name || 'Kasir',
+              items: cart.map(item => ({
+                name: item.product.name,
+                price: item.product.sellingPrice,
+                quantity: item.quantity,
+                total: item.product.sellingPrice * item.quantity
+              })),
+              totals: {
+                subtotal: cartTotals.subtotal,
+                tax: cartTotals.tax,
+                total: cartTotals.total
+              },
+              cash: cartTotals.total,
+              change: 0,
+              paymentMethod: `Midtrans (${(result.payment_type || 'Online').toUpperCase()})`,
+              member: matchedMember ? {
+                code: matchedMember.memberCode,
+                name: matchedMember.name,
+                points: matchedMember.points + (finishRes.transaction?.pointsEarned || 0),
+                newPointsEarned: finishRes.transaction?.pointsEarned || 0
+              } : null,
+              isOffline: false
+            }
+
+            setLastTransaction(finalReceiptData)
+            showToast('Pembayaran Midtrans Berhasil!', 'success')
+            setCart([])
+            setMemberPhone('')
+            setCashReceived('')
+          } catch (finishErr: any) {
+            console.error('Finish midtrans error:', finishErr)
+            showToast('Pembayaran selesai tapi gagal menyimpan data: ' + finishErr.message, 'error')
+          }
+        },
+        onPending: (_result: any) => {
+          showToast('Menunggu pembayaran pelanggan selesai (Pending).', 'success')
+        },
+        onError: (_err: any) => {
+          showToast('Pembayaran Midtrans gagal atau dibatalkan.', 'error')
+        },
+        onClose: () => {
+          showToast('Jendela pembayaran Midtrans ditutup.', 'error')
+        }
+      })
+    } catch (err: any) {
+      console.error('Midtrans flow error:', err)
+      showToast(err.message || 'Gagal memproses pembayaran Midtrans.', 'error')
+    } finally {
+      setIsMidtransLoading(false)
     }
   }
 
@@ -706,60 +979,200 @@ function Dashboard() {
           })()}
         </div>
 
-        {/* Static Payment Info (Cash only) */}
-        <div className="flex items-center justify-between p-3 bg-indigo-50/50 border border-indigo-100 rounded-xl text-xs text-[#6E7385]">
-          <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[#5B50E5] text-base">payments</span>
-            <span className="font-bold">Metode Pembayaran</span>
+        {/* Payment Method Selector Tabs */}
+        <div className="space-y-2">
+          <label className="block text-[10px] font-bold text-[#6E7385] uppercase tracking-wider">
+            Pilih Metode Pembayaran
+          </label>
+          <div className="grid grid-cols-3 gap-1 p-1 bg-[#EEF0FA] rounded-xl text-[11px] font-bold">
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('CASH')}
+              className={`py-2 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                paymentMethod === 'CASH'
+                  ? 'bg-white text-[#5B50E5] shadow-xs'
+                  : 'text-[#6E7385] hover:text-[#1E2330]'
+              }`}
+            >
+              <Banknote className="w-3.5 h-3.5" />
+              <span>Tunai</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('TRANSFER')}
+              className={`py-2 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                paymentMethod === 'TRANSFER'
+                  ? 'bg-white text-[#5B50E5] shadow-xs'
+                  : 'text-[#6E7385] hover:text-[#1E2330]'
+              }`}
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" />
+              <span>Transfer</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('MIDTRANS')}
+              className={`py-2 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                paymentMethod === 'MIDTRANS'
+                  ? 'bg-white text-[#5B50E5] shadow-xs'
+                  : 'text-[#6E7385] hover:text-[#1E2330]'
+              }`}
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>Midtrans</span>
+            </button>
           </div>
-          <span className="font-extrabold text-[#5B50E5]">Tunai (Cash)</span>
         </div>
 
-        {/* Cash Received Input */}
-        <div className="space-y-1.5 bg-white p-3 rounded-xl border border-[#E2E8F0]/80 shadow-sm">
-          <label className="block text-[10px] font-bold text-[#6E7385] uppercase tracking-wider">Uang Tunai Diterima (Wajib)</label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#6E7385]">Rp</span>
-            <input
-              type="number"
-              placeholder="0"
-              value={cashReceived}
-              onChange={(e) => setCashReceived(e.target.value)}
-              className="w-full pl-8 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg font-body-md text-xs text-[#1E2330] focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10 text-sm font-semibold"
-            />
-          </div>
-        </div>
+        {/* PAYMENT METHOD: CASH */}
+        {paymentMethod === 'CASH' && (
+          <>
+            {/* Cash Received Input */}
+            <div className="space-y-1.5 bg-white p-3 rounded-xl border border-[#E2E8F0]/80 shadow-sm">
+              <label className="block text-[10px] font-bold text-[#6E7385] uppercase tracking-wider">Uang Tunai Diterima (Wajib)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#6E7385]">Rp</span>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={cashReceived}
+                  onChange={(e) => setCashReceived(e.target.value)}
+                  className="w-full pl-8 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg font-body-md text-xs text-[#1E2330] focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10 text-sm font-semibold"
+                />
+              </div>
+            </div>
 
-        {/* Realtime Change calculation */}
-        {parseFloat(cashReceived) > 0 && (
-          <div className={`flex justify-between items-center p-3.5 rounded-xl text-xs border ${
-            parseFloat(cashReceived) - cartTotals.total < 0
-              ? 'bg-red-50 border-red-200 text-red-700'
-              : 'bg-emerald-50 border-emerald-200 text-emerald-700'
-          }`}>
-            <span className="font-bold">
-              {parseFloat(cashReceived) - cartTotals.total < 0 ? 'Kekurangan Uang' : 'Kembalian'}
-            </span>
-            <span className="font-extrabold text-sm">
-              {parseFloat(cashReceived) - cartTotals.total < 0
-                ? formatCurrency(Math.abs(parseFloat(cashReceived) - cartTotals.total))
-                : formatCurrency(parseFloat(cashReceived) - cartTotals.total)}
-            </span>
+            {/* Realtime Change calculation */}
+            {parseFloat(cashReceived) > 0 && (
+              <div className={`flex justify-between items-center p-3.5 rounded-xl text-xs border ${
+                parseFloat(cashReceived) - cartTotals.total < 0
+                  ? 'bg-red-50 border-red-200 text-red-700'
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              }`}>
+                <span className="font-bold">
+                  {parseFloat(cashReceived) - cartTotals.total < 0 ? 'Kekurangan Uang' : 'Kembalian'}
+                </span>
+                <span className="font-extrabold text-sm">
+                  {parseFloat(cashReceived) - cartTotals.total < 0
+                    ? formatCurrency(Math.abs(parseFloat(cashReceived) - cartTotals.total))
+                    : formatCurrency(parseFloat(cashReceived) - cartTotals.total)}
+                </span>
+              </div>
+            )}
+
+            {/* Primary CTA Action Button for Cash */}
+            <button
+              onClick={() => {
+                handleProcessPayment()
+                setIsCartOpenMobile(false)
+              }}
+              disabled={cart.length === 0 || !cashReceived || parseFloat(cashReceived) - cartTotals.total < 0}
+              className="w-full py-3.5 bg-gradient-to-r from-[#5B50E5] to-[#4A3FC8] hover:shadow-lg hover:shadow-[#5B50E5]/25 disabled:opacity-50 text-white rounded-[10px] font-extrabold active:scale-[0.98] transition-all-default flex items-center justify-center gap-2 cursor-pointer h-12 text-sm"
+            >
+              <span>{tText.process}</span>
+              <span className="material-symbols-outlined text-lg">arrow_forward</span>
+            </button>
+          </>
+        )}
+
+        {/* PAYMENT METHOD: DIRECT TRANSFER */}
+        {paymentMethod === 'TRANSFER' && (
+          <div className="space-y-3">
+            <div className="bg-gradient-to-br from-[#EEF0FA] to-white p-3.5 rounded-2xl border border-blue-100 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700">
+                  <ArrowLeftRight className="w-4 h-4 text-blue-700" />
+                  <span>Transfer Bank Langsung</span>
+                </div>
+                <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                  Pas / Lunas
+                </span>
+              </div>
+              <p className="text-[11px] text-[#6E7385] leading-relaxed">
+                Pelanggan melakukan transfer ke rekening toko sebesar nominal pas: <strong className="text-[#1E2330]">{formatCurrency(cartTotals.total)}</strong>.
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                handleProcessTransferPayment()
+                setIsCartOpenMobile(false)
+              }}
+              disabled={cart.length === 0}
+              className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 text-white rounded-[10px] font-extrabold active:scale-[0.98] transition-all-default flex items-center justify-center gap-2 cursor-pointer h-12 text-sm"
+            >
+              <span>Konfirmasi Pembayaran Transfer</span>
+              <span className="material-symbols-outlined text-lg">check_circle</span>
+            </button>
           </div>
         )}
 
-        {/* Primary CTA Action Button with glowing hover effect */}
-        <button
-          onClick={() => {
-            handleProcessPayment()
-            setIsCartOpenMobile(false)
-          }}
-          disabled={cart.length === 0 || !cashReceived || parseFloat(cashReceived) - cartTotals.total < 0}
-          className="w-full py-3.5 bg-gradient-to-r from-[#5B50E5] to-[#4A3FC8] hover:shadow-lg hover:shadow-[#5B50E5]/25 disabled:opacity-50 text-white rounded-[10px] font-extrabold active:scale-[0.98] transition-all-default flex items-center justify-center gap-2 cursor-pointer h-12 text-sm"
-        >
-          <span>{tText.process}</span>
-          <span className="material-symbols-outlined text-lg">arrow_forward</span>
-        </button>
+        {/* PAYMENT METHOD: MIDTRANS */}
+        {paymentMethod === 'MIDTRANS' && (
+          <div className="space-y-3">
+            <div className="bg-gradient-to-br from-[#EEF0FA] to-white p-3.5 rounded-2xl border border-indigo-100 shadow-xs space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#5B50E5]">
+                  <Sparkles className="w-4 h-4 text-[#5B50E5]" />
+                  <span>Payment Gateway Midtrans</span>
+                </div>
+                <span className="text-[10px] font-bold bg-indigo-100 text-[#5B50E5] px-2 py-0.5 rounded-full">
+                  Instant Verification
+                </span>
+              </div>
+
+              <p className="text-[11px] text-[#6E7385] leading-relaxed">
+                Pelanggan dapat membayar instan via <strong>QRIS</strong>, <strong>GoPay</strong>, <strong>ShopeePay</strong>, <strong>Virtual Account (BCA/BRI/Mandiri/BNI)</strong>, atau <strong>Kartu Debit/Kredit</strong>.
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                <span className="text-[10px] font-bold bg-white border border-[#E2E8F0] text-[#1E2330] px-2 py-0.5 rounded-md flex items-center gap-1">
+                  <QrCode className="w-3 h-3 text-[#5B50E5]" /> QRIS
+                </span>
+                <span className="text-[10px] font-bold bg-white border border-[#E2E8F0] text-[#1E2330] px-2 py-0.5 rounded-md">
+                  GoPay
+                </span>
+                <span className="text-[10px] font-bold bg-white border border-[#E2E8F0] text-[#1E2330] px-2 py-0.5 rounded-md">
+                  ShopeePay
+                </span>
+                <span className="text-[10px] font-bold bg-white border border-[#E2E8F0] text-[#1E2330] px-2 py-0.5 rounded-md">
+                  VA Bank
+                </span>
+                <span className="text-[10px] font-bold bg-white border border-[#E2E8F0] text-[#1E2330] px-2 py-0.5 rounded-md">
+                  Kartu Kredit
+                </span>
+              </div>
+            </div>
+
+            {/* Total tagihan reminder */}
+            <div className="flex justify-between items-center p-3 bg-white rounded-xl border border-[#E2E8F0] text-xs">
+              <span className="text-[#6E7385] font-semibold">Total Tagihan:</span>
+              <span className="font-extrabold text-base text-[#5B50E5]">{formatCurrency(cartTotals.total)}</span>
+            </div>
+
+            {/* Midtrans CTA Button */}
+            <button
+              onClick={() => {
+                handleProcessMidtransPayment()
+                setIsCartOpenMobile(false)
+              }}
+              disabled={cart.length === 0 || isMidtransLoading}
+              className="w-full py-3.5 bg-gradient-to-r from-[#5B50E5] to-[#4A3FC8] hover:from-[#6C62EC] hover:to-[#5B50E5] hover:shadow-lg hover:shadow-[#5B50E5]/25 disabled:opacity-50 text-white rounded-xl font-extrabold active:scale-[0.98] transition-all-default flex items-center justify-center gap-2 cursor-pointer h-12 text-sm"
+            >
+              {isMidtransLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Membuka Midtrans Snap...</span>
+                </>
+              ) : (
+                <>
+                  <CreditCard className="w-4 h-4" />
+                  <span>Bayar via Midtrans Snap</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </>
   )
@@ -1394,13 +1807,40 @@ function Dashboard() {
 
               <div className="space-y-1 text-[10px]">
                 <div className="flex justify-between text-[#6E7385] print:text-black">
-                  <span>Tunai Diterima:</span>
-                  <span className="font-bold text-[#1E2330] print:text-black">{formatCurrency(lastTransaction.cash)}</span>
+                  <span>Metode Pembayaran:</span>
+                  <span className="font-bold text-[#1E2330] print:text-black">
+                    {formatPaymentMethodName(lastTransaction.paymentMethod)}
+                  </span>
                 </div>
-                <div className="flex justify-between text-[#6E7385] print:text-black">
-                  <span>Kembalian:</span>
-                  <span className="font-bold text-emerald-600 print:text-black">{formatCurrency(lastTransaction.change)}</span>
-                </div>
+                {isCashPayment(lastTransaction.paymentMethod) ? (
+                  <>
+                    <div className="flex justify-between text-[#6E7385] print:text-black">
+                      <span>Tunai Diterima:</span>
+                      <span className="font-bold text-[#1E2330] print:text-black">{formatCurrency(lastTransaction.cash)}</span>
+                    </div>
+                    <div className="flex justify-between text-[#6E7385] print:text-black">
+                      <span>Kembalian:</span>
+                      <span className="font-bold text-emerald-600 print:text-black">{formatCurrency(lastTransaction.change)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between text-[#6E7385] print:text-black">
+                      <span>Total Dibayar:</span>
+                      <span className="font-bold text-[#1E2330] print:text-black">
+                        {formatCurrency(lastTransaction.totals?.total || lastTransaction.cash)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[#6E7385] print:text-black">
+                      <span>Status Pembayaran:</span>
+                      <span className="font-bold text-emerald-600 print:text-black">
+                        {lastTransaction.paymentMethod?.toUpperCase().includes('MIDTRANS')
+                          ? 'LUNAS (MIDTRANS)'
+                          : 'LUNAS (TRANSFER)'}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
 
               {lastTransaction.member && (

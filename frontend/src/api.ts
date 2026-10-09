@@ -188,6 +188,56 @@ export async function fetchTransactions(): Promise<Transaction[]> {
 }
 
 // ==========================================
+// MIDTRANS PAYMENT GATEWAY
+// ==========================================
+export async function fetchMidtransConfig(): Promise<{ clientKey: string; merchantId: string; isProduction: boolean }> {
+  const res = await fetch(`${API_BASE}/transactions/midtrans/config`, {
+    headers: authHeaders(false),
+  })
+  return handleResponse(res)
+}
+
+export async function createMidtransSnapToken(data: {
+  memberId?: number | null
+  items: { productId: number; quantity: number }[]
+}): Promise<{
+  success: boolean
+  token: string
+  redirectUrl: string
+  invoiceNumber: string
+  grossAmount: number
+  clientKey: string
+}> {
+  const res = await fetch(`${API_BASE}/transactions/midtrans/token`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  })
+  return handleResponse(res)
+}
+
+export async function finishMidtransTransaction(data: {
+  invoiceNumber: string
+  paymentType?: string
+  memberId?: number | null
+  items: { productId: number; quantity: number }[]
+}): Promise<{ success: boolean; transaction: Transaction }> {
+  const res = await fetch(`${API_BASE}/transactions/midtrans/finish`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  })
+  return handleResponse(res)
+}
+
+export async function checkMidtransStatus(orderId: string): Promise<any> {
+  const res = await fetch(`${API_BASE}/transactions/midtrans/status/${orderId}`, {
+    headers: authHeaders(false),
+  })
+  return handleResponse(res)
+}
+
+// ==========================================
 // MEMBERS
 // ==========================================
 export async function fetchMembers(search?: string): Promise<Member[]> {

@@ -3,6 +3,18 @@ import { fetchTransactions } from '../api'
 import type { Transaction } from '../types'
 import { SkeletonRow } from '../components/Skeleton'
 import { EmptyState } from '../components/EmptyState'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { RefreshCw, Search, Receipt } from 'lucide-react'
 
 interface HistoryPageProps {
   onViewReceipt: (receipt: any) => void
@@ -109,6 +121,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onViewReceipt }) => {
       },
       cash: totalAmount, // fallback
       change: 0, // fallback
+      paymentMethod: tx.paymentMethod || 'CASH',
       member: tx.memberCode ? {
         code: tx.memberCode,
         name: tx.memberName || 'Member',
@@ -129,13 +142,14 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onViewReceipt }) => {
           <h2 className="text-xl font-extrabold text-[#1E2330]">Riwayat Penjualan</h2>
           <p className="text-xs text-[#6E7385] mt-1">Daftar transaksi penjualan POS kasir terakhir.</p>
         </div>
-        <button
+        <Button
+          variant="outline"
           onClick={loadTransactions}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-[#E2E8F0] rounded-xl font-bold text-xs text-[#1E2330] hover:bg-[#EEF0FA] active:scale-95 transition-all-default shadow-sm"
+          className="border-[#E2E8F0] bg-white font-bold text-xs text-[#1E2330] hover:bg-[#EEF0FA] active:scale-95 shadow-sm rounded-xl cursor-pointer"
         >
-          <span className="material-symbols-outlined text-sm font-bold">refresh</span>
+          <RefreshCw className="w-3.5 h-3.5 mr-1 text-[#1E2330]" />
           <span>Segarkan</span>
-        </button>
+        </Button>
       </div>
 
       {/* Main Content Area */}
@@ -143,13 +157,13 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onViewReceipt }) => {
         {/* Filters */}
         <div className="p-5 border-b border-[#E2E8F0] flex items-center justify-between gap-4 shrink-0 flex-wrap">
           <div className="relative w-full max-w-md">
-            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6E7385] text-sm">search</span>
-            <input
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6E7385] w-4 h-4 pointer-events-none" />
+            <Input
               type="text"
               placeholder="Cari berdasarkan No. Invoice, Kasir, atau Member..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl font-body-md text-xs text-[#1E2330] focus:outline-none focus:border-[#5B50E5] focus:ring-2 focus:ring-[#5B50E5]/10 text-sm font-semibold"
+              className="pl-10 pr-4 py-2 bg-[#F8FAFC] border-[#E2E8F0] rounded-xl text-xs text-[#1E2330] focus-visible:border-[#5B50E5] focus-visible:ring-[#5B50E5]/10 font-semibold h-10"
             />
           </div>
           <div className="text-xs font-bold text-[#6E7385]">
@@ -160,21 +174,21 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onViewReceipt }) => {
         {/* Table Content */}
         <div className="overflow-x-auto flex-1">
           {isLoading && transactions.length === 0 ? (
-            <table className="w-full text-left border-collapse min-w-[700px]">
-              <thead>
-                <tr className="bg-[#EEF0FA]/40 border-b border-[#E2E8F0] text-[#6E7385]">
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider pl-6">No. Invoice</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Tanggal</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Kasir</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Member</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider text-right">Total Belanja</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider pr-6 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table className="w-full min-w-[700px]">
+              <TableHeader>
+                <TableRow className="bg-[#EEF0FA]/40 border-b border-[#E2E8F0] text-[#6E7385] hover:bg-[#EEF0FA]/40">
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider pl-6 text-[#6E7385]">No. Invoice</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">Tanggal</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">Kasir</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">Member</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-right text-[#6E7385]">Total Belanja</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider pr-6 text-right text-[#6E7385]">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 <SkeletonRow cols={6} rows={5} />
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           ) : error ? (
             <div className="p-12 text-center text-[#E03131] flex flex-col items-center justify-center h-64">
               <span className="material-symbols-outlined text-[48px] mb-2">error</span>
@@ -187,41 +201,46 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onViewReceipt }) => {
               description="Transaksi kasir yang sukses atau disinkronkan secara lokal akan tampil di sini."
             />
           ) : (
-            <table className="w-full text-left border-collapse min-w-[700px]">
-              <thead>
-                <tr className="bg-[#EEF0FA]/40 border-b border-[#E2E8F0] text-[#6E7385]">
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider pl-6">No. Invoice</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Tanggal</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Kasir</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Member</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider text-right">Total Belanja</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider pr-6 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E2E8F0]">
+            <Table className="w-full min-w-[700px]">
+              <TableHeader>
+                <TableRow className="bg-[#EEF0FA]/40 border-b border-[#E2E8F0] text-[#6E7385] hover:bg-[#EEF0FA]/40">
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider pl-6 text-[#6E7385]">No. Invoice</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">Tanggal</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">Kasir</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">Member</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">Metode</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-right text-[#6E7385]">Total Belanja</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider pr-6 text-right text-[#6E7385]">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-[#E2E8F0]">
                 {filteredTransactions.map((tx) => {
                   const isOfflineTx = tx.invoiceNumber.startsWith('INV-OFF')
+                  const upperMethod = (tx.paymentMethod || 'CASH').toUpperCase()
                   return (
-                    <tr key={tx.id} className="hover:bg-[#F8FAFC] transition-colors">
-                      <td className="p-4 pl-6">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 border rounded-full font-bold text-xs ${
-                          isOfflineTx
-                            ? 'bg-amber-50 border-amber-200 text-amber-700'
-                            : 'bg-indigo-50 border-indigo-100 text-indigo-700'
-                        }`}>
+                    <TableRow key={tx.id} className="hover:bg-[#F8FAFC] transition-colors border-[#E2E8F0]">
+                      <TableCell className="p-4 pl-6">
+                        <Badge
+                          variant="outline"
+                          className={`font-bold text-xs px-2.5 py-1 rounded-full border ${
+                            isOfflineTx
+                              ? 'bg-amber-50 border-amber-200 text-amber-700'
+                              : 'bg-indigo-50 border-indigo-100 text-indigo-700'
+                          }`}
+                        >
                           {tx.invoiceNumber}
-                        </span>
-                      </td>
-                      <td className="p-4 text-xs text-[#6E7385]">
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="p-4 text-xs text-[#6E7385]">
                         {new Date(tx.createdAt).toLocaleString('id-ID', {
                           dateStyle: 'medium',
                           timeStyle: 'short'
                         })}
-                      </td>
-                      <td className="p-4">
+                      </TableCell>
+                      <TableCell className="p-4">
                         <span className="font-bold text-[#1E2330] text-xs">{tx.cashierName}</span>
-                      </td>
-                      <td className="p-4 text-xs">
+                      </TableCell>
+                      <TableCell className="p-4 text-xs">
                         {tx.memberName ? (
                           <div className="flex flex-col">
                             <span className="font-bold text-[#1E2330]">{tx.memberName}</span>
@@ -230,25 +249,45 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onViewReceipt }) => {
                         ) : (
                           <span className="text-[#6E7385]/60">-</span>
                         )}
-                      </td>
-                      <td className="p-4 text-right">
+                      </TableCell>
+                      <TableCell className="p-4">
+                        <Badge
+                          variant="outline"
+                          className={`font-bold text-[11px] px-2.5 py-0.5 rounded-full border ${
+                            upperMethod.includes('MIDTRANS')
+                              ? 'bg-purple-50 border-purple-200 text-purple-700'
+                              : upperMethod.includes('TRANSFER')
+                              ? 'bg-blue-50 border-blue-200 text-blue-700'
+                              : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                          }`}
+                        >
+                          {upperMethod.includes('MIDTRANS')
+                            ? tx.paymentMethod.replace('MIDTRANS', 'Midtrans').replace(/[\(\)]/g, ' ').trim()
+                            : upperMethod.includes('TRANSFER')
+                            ? 'Transfer'
+                            : 'Tunai'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="p-4 text-right">
                         <span className="font-extrabold text-[#1E2330] text-xs">{formatCurrency(tx.totalAmount)}</span>
-                      </td>
-                      <td className="p-4 pr-6 text-right">
-                        <button
+                      </TableCell>
+                      <TableCell className="p-4 pr-6 text-right">
+                        <Button
+                          size="sm"
+                          variant="secondary"
                           onClick={() => handleActionView(tx)}
-                          className="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-[#5B50E5]/10 hover:bg-[#5B50E5] text-[#5B50E5] hover:text-white rounded-lg transition-all-default font-bold text-xs active:scale-95"
+                          className="bg-[#5B50E5]/10 hover:bg-[#5B50E5] text-[#5B50E5] hover:text-white rounded-lg font-bold text-xs cursor-pointer transition-colors"
                           title="Lihat Struk"
                         >
-                          <span className="material-symbols-outlined text-xs leading-none">receipt</span>
+                          <Receipt className="w-3.5 h-3.5 mr-1" />
                           <span>Lihat Struk</span>
-                        </button>
-                      </td>
-                    </tr>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
       </div>

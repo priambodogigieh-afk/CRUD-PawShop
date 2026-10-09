@@ -1,9 +1,20 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Edit, Trash2, Search, X, Check } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, X, Check, Loader2 } from 'lucide-react'
 import type { Member } from '../types'
 import { fetchMembers, createMember, updateMember, deleteMember } from '../api'
 import { SkeletonRow } from '../components/Skeleton'
 import { EmptyState } from '../components/EmptyState'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([])
@@ -148,13 +159,13 @@ export default function MembersPage() {
           <h1 className="font-headline-lg text-2xl font-extrabold text-[#1E2330]">Kelola Member</h1>
           <p className="font-label-md text-xs text-[#6E7385] mt-1">Daftar member terintegrasi untuk point reward transaksi.</p>
         </div>
-        <button
+        <Button
           onClick={handleOpenAddModal}
-          className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#5B50E5] to-[#4A3FC8] hover:from-[#6C62EC] hover:to-[#5B50E5] text-white rounded-xl font-bold transition-all duration-200 shadow-md shadow-[#5B50E5]/20 hover:shadow-[#5B50E5]/30 active:scale-95 text-sm"
+          className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#5B50E5] to-[#4A3FC8] hover:from-[#6C62EC] hover:to-[#5B50E5] text-white rounded-xl font-bold transition-all duration-200 shadow-md shadow-[#5B50E5]/20 hover:shadow-[#5B50E5]/30 active:scale-95 text-sm cursor-pointer h-11"
         >
           <Plus className="w-4 h-4" />
           <span>Tambah Member</span>
-        </button>
+        </Button>
       </div>
 
       {/* Filter and Search Box */}
@@ -163,17 +174,17 @@ export default function MembersPage() {
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6E7385] pointer-events-none">
             <Search className="w-4 h-4" />
           </span>
-          <input
+          <Input
             type="text"
             placeholder="Cari berdasarkan Nama, No. Telepon atau Kode Member..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-[#EEF0FA]/40 border border-[#E2E8F0] rounded-xl font-body-md text-sm text-[#1E2330] focus:outline-none focus:border-[#5B50E5] focus:ring-4 focus:ring-[#5B50E5]/10 transition-all duration-200"
+            className="w-full pl-10 pr-10 py-2.5 bg-[#EEF0FA]/40 border-[#E2E8F0] rounded-xl text-sm text-[#1E2330] focus-visible:border-[#5B50E5] focus-visible:ring-[#5B50E5]/10 h-10"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-[#6E7385] hover:text-[#1E2330]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-[#6E7385] hover:text-[#1E2330] cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -185,20 +196,20 @@ export default function MembersPage() {
       <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden premium-shadow-sm flex-1 flex flex-col">
         <div className="overflow-x-auto flex-1">
           {isLoading && members.length === 0 ? (
-            <table className="w-full text-left border-collapse min-w-[600px]">
-              <thead>
-                <tr className="bg-[#EEF0FA]/40 border-b border-[#E2E8F0] text-[#6E7385]">
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider pl-6">Kode Member</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Nama</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider">No. Telepon</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Poin Saat Ini</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider pr-6 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table className="w-full min-w-[600px]">
+              <TableHeader>
+                <TableRow className="bg-[#EEF0FA]/40 border-b border-[#E2E8F0] text-[#6E7385] hover:bg-[#EEF0FA]/40">
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider pl-6 text-[#6E7385]">Kode Member</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">Nama</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">No. Telepon</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">Poin Saat Ini</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider pr-6 text-right text-[#6E7385]">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 <SkeletonRow cols={5} rows={5} />
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           ) : error ? (
             <div className="p-12 text-center text-[#E03131] flex flex-col items-center justify-center h-64">
               <span className="material-symbols-outlined text-[48px] mb-2">error</span>
@@ -210,60 +221,67 @@ export default function MembersPage() {
               title="Belum ada member terdaftar"
               description="Daftarkan pelanggan setia Anda untuk mendapatkan poin reward setiap transaksi."
               action={
-                <button
+                <Button
                   onClick={handleOpenAddModal}
-                  className="bg-[#5B50E5] hover:bg-[#4A3FC8] text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-md shadow-[#5B50E5]/20 hover:shadow-[#5B50E5]/30 cursor-pointer"
+                  className="bg-[#5B50E5] hover:bg-[#4A3FC8] text-white px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-[#5B50E5]/20 hover:shadow-[#5B50E5]/30 cursor-pointer"
                 >
                   Tambah Member Baru
-                </button>
+                </Button>
               }
             />
           ) : (
-            <table className="w-full text-left border-collapse min-w-[600px]">
-              <thead>
-                <tr className="bg-[#EEF0FA]/40 border-b border-[#E2E8F0] text-[#6E7385]">
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider pl-6">Kode Member</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Nama</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider">No. Telepon</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider">Poin Saat Ini</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider pr-6 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E2E8F0]">
+            <Table className="w-full min-w-[600px]">
+              <TableHeader>
+                <TableRow className="bg-[#EEF0FA]/40 border-b border-[#E2E8F0] text-[#6E7385] hover:bg-[#EEF0FA]/40">
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider pl-6 text-[#6E7385]">Kode Member</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">Nama</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">No. Telepon</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider text-[#6E7385]">Poin Saat Ini</TableHead>
+                  <TableHead className="p-4 font-bold text-xs uppercase tracking-wider pr-6 text-right text-[#6E7385]">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-[#E2E8F0]">
                 {members.map((member) => (
-                  <tr key={member.id} className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="p-4 pl-6">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-full font-bold text-xs">
+                  <TableRow key={member.id} className="hover:bg-[#F8FAFC] transition-colors border-[#E2E8F0]">
+                    <TableCell className="p-4 pl-6">
+                      <Badge
+                        variant="outline"
+                        className="bg-indigo-50 border-indigo-100 text-indigo-700 rounded-full font-bold text-xs px-3 py-1"
+                      >
                         {member.memberCode}
-                      </span>
-                    </td>
-                    <td className="p-4">
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="p-4">
                       <span className="font-bold text-[#1E2330] text-sm">{member.name}</span>
-                    </td>
-                    <td className="p-4 text-sm text-[#6E7385]">{member.phone}</td>
-                    <td className="p-4">
+                    </TableCell>
+                    <TableCell className="p-4 text-sm text-[#6E7385]">{member.phone}</TableCell>
+                    <TableCell className="p-4">
                       <span className="font-extrabold text-[#5B50E5] text-sm">{member.points} pts</span>
-                    </td>
-                    <td className="p-4 pr-6 text-right space-x-2">
-                      <button
+                    </TableCell>
+                    <TableCell className="p-4 pr-6 text-right space-x-2">
+                      <Button
+                        size="icon"
+                        variant="ghost"
                         onClick={() => handleOpenEditModal(member)}
-                        className="inline-flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg cursor-pointer h-8 w-8"
                         title="Edit Member"
                       >
                         <Edit className="w-4 h-4" />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
                         onClick={() => handleDelete(member.id)}
-                        className="inline-flex items-center justify-center p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg cursor-pointer h-8 w-8"
                         title="Hapus Member"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
       </div>
@@ -278,7 +296,7 @@ export default function MembersPage() {
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 text-[#6E7385] hover:bg-[#EEF0FA] rounded-lg transition-all"
+                className="p-1.5 text-[#6E7385] hover:bg-[#EEF0FA] rounded-lg transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -296,13 +314,13 @@ export default function MembersPage() {
                 <label className="block text-xs font-bold text-[#6E7385] uppercase tracking-wider mb-1.5">
                   Nama Lengkap
                 </label>
-                <input
+                <Input
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="Masukkan nama member"
                   required
-                  className="w-full bg-[#EEF0FA]/30 border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#1E2330] placeholder-[#A0A5B5] focus:outline-none focus:border-[#5B50E5] focus:ring-4 focus:ring-[#5B50E5]/10 transition-all text-sm font-semibold"
+                  className="w-full bg-[#EEF0FA]/30 border-[#E2E8F0] rounded-xl px-4 py-3 text-[#1E2330] placeholder-[#A0A5B5] focus-visible:border-[#5B50E5] focus-visible:ring-[#5B50E5]/10 text-sm font-semibold h-11"
                 />
               </div>
 
@@ -310,36 +328,37 @@ export default function MembersPage() {
                 <label className="block text-xs font-bold text-[#6E7385] uppercase tracking-wider mb-1.5">
                   No. Telepon / WhatsApp
                 </label>
-                <input
+                <Input
                   type="tel"
                   value={formPhone}
                   onChange={(e) => setFormPhone(e.target.value)}
                   placeholder="Contoh: 081234567890"
                   required
-                  className="w-full bg-[#EEF0FA]/30 border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#1E2330] placeholder-[#A0A5B5] focus:outline-none focus:border-[#5B50E5] focus:ring-4 focus:ring-[#5B50E5]/10 transition-all text-sm font-semibold"
+                  className="w-full bg-[#EEF0FA]/30 border-[#E2E8F0] rounded-xl px-4 py-3 text-[#1E2330] placeholder-[#A0A5B5] focus-visible:border-[#5B50E5] focus-visible:ring-[#5B50E5]/10 text-sm font-semibold h-11"
                 />
               </div>
 
               <div className="flex gap-3 pt-4">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3 bg-[#EEF0FA]/60 text-[#6E7385] font-bold rounded-xl hover:bg-[#EEF0FA] active:scale-95 transition-all text-sm"
+                  className="flex-1 py-3 h-11 bg-[#EEF0FA]/60 text-[#6E7385] font-bold rounded-xl hover:bg-[#EEF0FA] active:scale-95 transition-all text-sm cursor-pointer"
                 >
                   Batal
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 py-3 bg-gradient-to-r from-[#5B50E5] to-[#4A3FC8] text-white font-bold rounded-xl hover:shadow-md hover:shadow-[#5B50E5]/20 active:scale-95 transition-all flex items-center justify-center gap-1.5 text-sm"
+                  className="flex-1 py-3 h-11 bg-gradient-to-r from-[#5B50E5] to-[#4A3FC8] text-white font-bold rounded-xl hover:shadow-md hover:shadow-[#5B50E5]/20 active:scale-95 transition-all flex items-center justify-center gap-1.5 text-sm cursor-pointer"
                 >
                   {isSubmitting ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <Check className="w-4 h-4" />
                   )}
                   <span>{editingMember ? 'Perbarui' : 'Daftarkan'}</span>
-                </button>
+                </Button>
               </div>
             </form>
           </div>
