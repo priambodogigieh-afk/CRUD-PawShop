@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { PrismaClient } from '@prisma/client'
 import { adminGuard } from '../utils/auth.js'
+import { sendN8nNotification } from '../utils/n8n.js'
 
 export function transactionsRoutes(prisma: PrismaClient) {
   return new Elysia({ prefix: '/api/transactions' })
@@ -269,6 +270,21 @@ export function transactionsRoutes(prisma: PrismaClient) {
           })
 
           return transaction
+        })
+
+        // Send real-time webhook notification to n8n
+        sendN8nNotification({
+          invoiceNumber: result.invoiceNumber,
+          totalAmount: result.totalAmount,
+          paymentMethod: result.paymentMethod,
+          cashierName: result.cashierName,
+          memberName: result.memberName,
+          items: result.items.map(it => ({
+            productName: it.productName,
+            quantity: it.quantity,
+            price: it.price
+          })),
+          createdAt: result.createdAt
         })
 
         return { success: true, transaction: result }
@@ -543,6 +559,21 @@ export function transactionsRoutes(prisma: PrismaClient) {
           return transaction
         })
 
+        // Send real-time webhook notification to n8n
+        sendN8nNotification({
+          invoiceNumber: result.invoiceNumber,
+          totalAmount: result.totalAmount,
+          paymentMethod: result.paymentMethod,
+          cashierName: result.cashierName,
+          memberName: result.memberName,
+          items: result.items.map(it => ({
+            productName: it.productName,
+            quantity: it.quantity,
+            price: it.price
+          })),
+          createdAt: result.createdAt
+        })
+
         return { success: true, transaction: result }
       } catch (err: any) {
         console.error('Error saving finished Midtrans transaction:', err)
@@ -578,6 +609,24 @@ export function transactionsRoutes(prisma: PrismaClient) {
         set.status = 500
         return { error: err.message || 'Gagal memeriksa status Midtrans' }
       }
+    })
+
+    // POST Trigger n8n Webhook Test
+    .post('/n8n/test', async () => {
+      await sendN8nNotification({
+        invoiceNumber: `TRX-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-0017`,
+        totalAmount: 460000,
+        paymentMethod: 'QRIS',
+        cashierName: 'Dewi Lestari',
+        memberName: 'Budi Santoso',
+        items: [
+          { productName: 'Royal Canin Kitten 2kg', quantity: 1, price: 250000 },
+          { productName: 'Pasir Kucing Wangi 10L', quantity: 2, price: 75000 },
+          { productName: 'Mainan Bola Kucing', quantity: 3, price: 20000 }
+        ],
+        createdAt: new Date()
+      })
+      return { success: true, message: 'Notifikasi uji coba berhasil dikirim ke n8n!' }
     })
 }
 
